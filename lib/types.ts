@@ -17,6 +17,7 @@ export interface ITextConfig {
   fontFamily: string;
   fontSize: number;
   color: string;
+  textAlign: 'left' | 'center' | 'right';
 }
 
 export interface IRecipientData {
@@ -59,7 +60,7 @@ export const FONT_FAMILIES = [
   'Impact',
   'Trebuchet MS',
   'Courier New',
-  'Palatino'
+  'Palatino',
 ] as const;
 
-export type FontFamily = typeof FONT_FAMILIES[number];
+export type FontFamily = (typeof FONT_FAMILIES)[number];

@@ -27,6 +27,7 @@ export default function Home() {
     fontFamily: 'Arial',
     fontSize: 36,
     color: '#000000',
+    textAlign: 'center',
   });
 
   const [idConfig, setIdConfig] = useState<ITextConfig>({
@@ -35,6 +36,7 @@ export default function Home() {
     fontFamily: 'Arial',
     fontSize: 24,
     color: '#666666',
+    textAlign: 'center',
   });
 
   const handleTemplateUpload = async (file: File) => {

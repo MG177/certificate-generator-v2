@@ -7,7 +7,10 @@ interface CertificateCanvasProps {
   templateUrl: string;
   nameConfig: ITextConfig;
   idConfig: ITextConfig;
-  onPositionChange: (type: 'name' | 'id', position: { x: number; y: number }) => void;
+  onPositionChange: (
+    type: 'name' | 'id',
+    position: { x: number; y: number }
+  ) => void;
   className?: string;
 }
 
@@ -16,7 +19,7 @@ export function CertificateCanvas({
   nameConfig,
   idConfig,
   onPositionChange,
-  className = ''
+  className = '',
 }: CertificateCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -75,17 +78,17 @@ export function CertificateCanvas({
   ) => {
     ctx.font = `${config.fontSize * scale}px ${config.fontFamily}`;
     ctx.fillStyle = config.color;
-    ctx.textAlign = 'center';
+    ctx.textAlign = config.textAlign;
     ctx.textBaseline = 'middle';
-    
+
     // Add subtle shadow
     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
     ctx.shadowBlur = 2 * scale;
     ctx.shadowOffsetX = 1 * scale;
     ctx.shadowOffsetY = 1 * scale;
-    
+
     ctx.fillText(text, config.x * scale, config.y * scale);
-    
+
     // Reset shadow
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
@@ -164,7 +167,10 @@ export function CertificateCanvas({
   };
 
   return (
-    <div ref={containerRef} className={`border rounded-lg overflow-hidden ${className}`}>
+    <div
+      ref={containerRef}
+      className={`border rounded-lg overflow-hidden ${className}`}
+    >
       <canvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
@@ -174,7 +180,8 @@ export function CertificateCanvas({
         style={{ display: 'block' }}
       />
       <div className="p-2 bg-gray-50 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-400">
-        Click to reposition • Drag indicators to fine-tune • Blue: Name • Green: Certificate ID
+        Click to reposition • Drag indicators to fine-tune • Blue: Name • Green:
+        Certificate ID
       </div>
     </div>
   );
