@@ -22,6 +22,7 @@ export function parseCSV(csvContent: string): IRecipientData[] {
   const certIdIndex = headers.indexOf('certification_id');
 
   const recipients: IRecipientData[] = [];
+  const seenCertIds = new Set<string>();
 
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split(',').map((v) => v.trim());
@@ -41,6 +42,15 @@ export function parseCSV(csvContent: string): IRecipientData[] {
       continue;
     }
 
+    if (seenCertIds.has(certification_id)) {
+      throw new Error(
+        `Duplicate certification_id found: "${certification_id}" in row ${
+          i + 1
+        }`
+      );
+    }
+
+    seenCertIds.add(certification_id);
     recipients.push({ name, certification_id });
   }
 

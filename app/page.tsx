@@ -1,23 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { FileUpload } from '@/components/ui/file-upload';
-import { CertificateCanvas } from '@/components/certificate-canvas';
-import { FontCustomizer } from '@/components/font-customizer';
+import { TemplateUploadTab } from '@/components/template-upload-tab';
+import { LayoutCustomizationTab } from '@/components/layout-customization-tab';
+import { RecipientsUploadTab } from '@/components/recipients-upload-tab';
+import { CertificateGenerationTab } from '@/components/certificate-generation-tab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ITextConfig, IRecipientData } from '@/lib/types';
 import { parseCSV } from '@/lib/csv-utils';
-import { Download, FileImage, FileText, Settings, Users } from 'lucide-react';
+import { FileImage, Settings, Users, Download } from 'lucide-react';
 
 export default function Home() {
   const [templateFile, setTemplateFile] = useState<File | null>(null);
@@ -256,227 +248,117 @@ export default function Home() {
           </Alert>
         )}
 
-        <Tabs value={currentStep.toString()} className="w-full">
+        <Tabs
+          value={currentStep.toString()}
+          onValueChange={(value) => setCurrentStep(parseInt(value))}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="1" disabled={currentStep < 1}>
+            <TabsTrigger
+              value="1"
+              className={`relative ${templateUrl ? '' : ''}`}
+            >
               Template
+              {templateUrl && (
+                <div className="absolute top-1 right-1 w-3 h-3 bg-green-500 rounded-full" />
+              )}
             </TabsTrigger>
-            <TabsTrigger value="2" disabled={currentStep < 2}>
+            <TabsTrigger
+              value="2"
+              className={`relative ${nameConfig && idConfig ? '' : ''}`}
+            >
               Layout
+              {templateUrl && nameConfig && idConfig && (
+                <div className="absolute top-1 right-1 w-3 h-3 bg-green-500 rounded-full" />
+              )}
             </TabsTrigger>
-            <TabsTrigger value="3" disabled={currentStep < 3}>
+            <TabsTrigger
+              value="3"
+              className={`relative ${recipients.length > 0 ? '' : ''}`}
+            >
               Recipients
+              {recipients.length > 0 && (
+                <div className="absolute top-1 right-1 w-3 h-3 bg-green-500 rounded-full" />
+              )}
             </TabsTrigger>
-            <TabsTrigger value="4" disabled={currentStep < 4}>
+            <TabsTrigger
+              value="4"
+              className={`relative ${generating ? '' : ''}`}
+            >
               Generate
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="1" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileImage className="w-5 h-5" />
-                  Upload Certificate Template
-                </CardTitle>
-                <CardDescription>
-                  Upload a PNG image that will serve as your certificate
-                  template
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FileUpload
-                  onFileSelect={handleTemplateUpload}
-                  onFileRemove={() => {
-                    setTemplateFile(null);
-                    setTemplateUrl('');
-                    setCurrentStep(1);
-                  }}
-                  accept="image/png"
-                  selectedFile={templateFile}
-                  disabled={generating}
-                />
-                {uploadProgress > 0 && uploadProgress < 100 && (
-                  <Progress value={uploadProgress} className="mt-4" />
-                )}
-              </CardContent>
-            </Card>
+            <TemplateUploadTab
+              templateFile={templateFile}
+              uploadProgress={uploadProgress}
+              generating={generating}
+              onTemplateUpload={handleTemplateUpload}
+              onTemplateRemove={() => {
+                setTemplateFile(null);
+                setTemplateUrl('');
+                setCurrentStep(1);
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="2" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Certificate Preview</CardTitle>
-                  <CardDescription>
-                    Click on the template to position text elements. Drag the
-                    indicators to fine-tune positions.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {templateUrl && (
-                    <CertificateCanvas
-                      templateUrl={templateUrl}
-                      nameConfig={nameConfig}
-                      idConfig={idConfig}
-                      onPositionChange={(type, position) => {
-                        if (type === 'name') {
-                          setNameConfig({ ...nameConfig, ...position });
-                        } else {
-                          setIdConfig({ ...idConfig, ...position });
-                        }
-                      }}
-                      className="w-full h-96"
-                    />
-                  )}
-                </CardContent>
-              </Card>
-
-              <FontCustomizer
-                label="Recipient Name"
-                config={nameConfig}
-                onChange={setNameConfig}
-              />
-
-              <FontCustomizer
-                label="Certificate ID"
-                config={idConfig}
-                onChange={setIdConfig}
-              />
-            </div>
-
-            <div className="flex justify-end">
-              <Button
-                onClick={() => setCurrentStep(3)}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Continue to Recipients
-              </Button>
-            </div>
+            {!templateUrl && (
+              <Alert className="mb-6 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
+                <AlertDescription className="text-amber-800 dark:text-amber-200">
+                  Please upload a template first before customizing the layout.
+                </AlertDescription>
+              </Alert>
+            )}
+            <LayoutCustomizationTab
+              templateUrl={templateUrl}
+              nameConfig={nameConfig}
+              idConfig={idConfig}
+              onPositionChange={(type, position) => {
+                if (type === 'name') {
+                  setNameConfig({ ...nameConfig, ...position });
+                } else {
+                  setIdConfig({ ...idConfig, ...position });
+                }
+              }}
+              onNameConfigChange={setNameConfig}
+              onIdConfigChange={setIdConfig}
+              onContinue={() => setCurrentStep(3)}
+            />
           </TabsContent>
 
           <TabsContent value="3" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Upload Recipients Data
-                </CardTitle>
-                <CardDescription>
-                  Upload a CSV file with recipient names and certificate IDs.
-                  The file must have 'name' and 'certification_id' columns.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FileUpload
-                  onFileSelect={handleCSVUpload}
-                  onFileRemove={() => {
-                    setCsvFile(null);
-                    setRecipients([]);
-                    setCurrentStep(3);
-                  }}
-                  accept=".csv"
-                  selectedFile={csvFile}
-                  disabled={generating}
-                />
-
-                {recipients.length > 0 && (
-                  <div className="mt-6">
-                    <h4 className="font-medium mb-3">
-                      Preview ({recipients.length} recipients)
-                    </h4>
-                    <div className="max-h-48 overflow-y-auto border rounded-lg">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
-                          <tr>
-                            <th className="text-left p-3 font-medium">Name</th>
-                            <th className="text-left p-3 font-medium">
-                              Certificate ID
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {recipients.slice(0, 10).map((recipient, index) => (
-                            <tr key={index} className="border-t">
-                              <td className="p-3">{recipient.name}</td>
-                              <td className="p-3 text-gray-600 dark:text-gray-400">
-                                {recipient.certification_id}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      {recipients.length > 10 && (
-                        <div className="p-3 text-center text-sm text-gray-500 bg-gray-50 dark:bg-gray-800">
-                          ... and {recipients.length - 10} more recipients
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <RecipientsUploadTab
+              csvFile={csvFile}
+              recipients={recipients}
+              generating={generating}
+              onCSVUpload={handleCSVUpload}
+              onCSVRemove={() => {
+                setCsvFile(null);
+                setRecipients([]);
+                setCurrentStep(3);
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="4" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Download className="w-5 h-5" />
-                  Generate Certificates
-                </CardTitle>
-                <CardDescription>
-                  Review your settings and generate all certificates as a
-                  downloadable ZIP file
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {recipients.length}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Recipients
-                    </div>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      PNG
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Format
-                    </div>
-                  </div>
-                  <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                      ZIP
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Download
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleGenerateCertificates}
-                  disabled={generating || recipients.length === 0}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-4 text-lg"
-                >
-                  {generating ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Generating Certificates...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Download className="w-5 h-5" />
-                      Generate & Download {recipients.length} Certificates
-                    </div>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+            {(!templateUrl || recipients.length === 0) && (
+              <Alert className="mb-6 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
+                <AlertDescription className="text-amber-800 dark:text-amber-200">
+                  {!templateUrl && recipients.length === 0
+                    ? 'Please complete all previous steps: upload a template and recipient data.'
+                    : !templateUrl
+                    ? 'Please upload a template first.'
+                    : 'Please upload recipient data first.'}
+                </AlertDescription>
+              </Alert>
+            )}
+            <CertificateGenerationTab
+              recipientsCount={recipients.length}
+              generating={generating}
+              onGenerate={handleGenerateCertificates}
+            />
           </TabsContent>
         </Tabs>
       </div>
