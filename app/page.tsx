@@ -358,6 +358,12 @@ export default function Home() {
               recipientsCount={recipients.length}
               generating={generating}
               onGenerate={handleGenerateCertificates}
+              disableGenerate={
+                !templateUrl ||
+                recipients.length === 0 ||
+                !nameConfig ||
+                !idConfig
+              }
             />
           </TabsContent>
         </Tabs>

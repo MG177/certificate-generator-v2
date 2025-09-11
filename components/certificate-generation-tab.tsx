@@ -14,13 +14,17 @@ interface CertificateGenerationTabProps {
   recipientsCount: number;
   generating: boolean;
   onGenerate: () => void;
+  disableGenerate: boolean;
 }
 
 export function CertificateGenerationTab({
   recipientsCount,
   generating,
   onGenerate,
+  disableGenerate,
 }: CertificateGenerationTabProps) {
+  console.log('disableGenerate', disableGenerate);
+
   return (
     <Card>
       <CardHeader>
@@ -63,7 +67,7 @@ export function CertificateGenerationTab({
 
         <Button
           onClick={onGenerate}
-          disabled={generating || recipientsCount === 0}
+          disabled={generating || recipientsCount === 0 || disableGenerate}
           className="w-full bg-green-600 hover:bg-green-700 text-white py-4 text-lg"
         >
           {generating ? (
