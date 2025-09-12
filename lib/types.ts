@@ -1,5 +1,24 @@
 import { ObjectId } from 'mongodb';
 
+export interface IEvent {
+  _id?: ObjectId;
+  title: string;
+  description?: string;
+  eventDate: Date;
+  status: 'draft' | 'completed' | 'archived';
+  template: {
+    base64: string; // Base64 encoded PNG template
+    originalName: string;
+    uploadedAt: Date;
+  };
+  nameConfig: ITextConfig;
+  idConfig: ITextConfig;
+  participants: IRecipientData[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Keep IProject for backward compatibility
 export interface IProject {
   _id?: ObjectId;
   userId: string;
@@ -42,6 +61,18 @@ export interface CertificateEditorProps {
   project: IProject;
   onConfigChange: (newConfig: Partial<IProject>) => void;
   onSave: () => Promise<void>;
+}
+
+export interface EventEditorProps {
+  event: IEvent;
+  onConfigChange: (newConfig: Partial<IEvent>) => void;
+  onSave: () => Promise<void>;
+}
+
+export interface EventListProps {
+  events: IEvent[];
+  onEventSelect: (eventId: string) => void;
+  onEventDelete: (eventId: string) => Promise<void>;
 }
 
 export interface UploadResponse {

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -9,24 +10,31 @@ import {
 } from '@/components/ui/card';
 import { FileUpload } from '@/components/ui/file-upload';
 import { Button } from '@/components/ui/button';
-import { FileText, Download } from 'lucide-react';
-import { IRecipientData } from '@/lib/types';
+import { FileText, Download, CheckCircle } from 'lucide-react';
+import { IRecipientData, IEvent } from '@/lib/types';
+import { saveParticipants } from '@/lib/actions';
+import { parseCSV } from '@/lib/csv-utils';
 
 interface RecipientsUploadTabProps {
-  csvFile: File | null;
-  recipients: IRecipientData[];
-  generating: boolean;
-  onCSVUpload: (file: File) => void;
-  onCSVRemove: () => void;
+  event: IEvent | null;
+  onParticipantsUploaded: () => void;
 }
 
 export function RecipientsUploadTab({
-  csvFile,
-  recipients,
-  generating,
-  onCSVUpload,
-  onCSVRemove,
+  event,
+  onParticipantsUploaded,
 }: RecipientsUploadTabProps) {
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [recipients, setRecipients] = useState<IRecipientData[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Initialize recipients from event
+  useEffect(() => {
+    if (event) {
+      setRecipients(event.participants);
+    }
+  }, [event]);
+
   const downloadCSVTemplate = () => {
     const csvContent =
       'name,certification_id\nJohn Doe,CERT-001\nJane Smith,CERT-002\nBob Johnson,CERT-003';
@@ -40,6 +48,34 @@ export function RecipientsUploadTab({
     link.click();
     document.body.removeChild(link);
   };
+
+  const handleCSVUpload = async (file: File) => {
+    if (!event?._id) return;
+
+    setCsvFile(file);
+    setIsUploading(true);
+
+    try {
+      const csvContent = await file.text();
+      const parsedRecipients = parseCSV(csvContent);
+
+      setRecipients(parsedRecipients);
+      await saveParticipants(event._id.toString(), parsedRecipients);
+      onParticipantsUploaded();
+    } catch (error) {
+      console.error('Error uploading CSV:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleCSVRemove = () => {
+    setCsvFile(null);
+    setRecipients([]);
+  };
+
+  const hasParticipants = recipients.length > 0;
+
   return (
     <Card>
       <CardHeader>
@@ -56,7 +92,7 @@ export function RecipientsUploadTab({
             variant="outline"
             size="sm"
             onClick={downloadCSVTemplate}
-            disabled={generating}
+            disabled={isUploading}
             className="flex items-center gap-2"
           >
             <Download className="w-4 h-4" />
@@ -65,15 +101,24 @@ export function RecipientsUploadTab({
         </div>
       </CardHeader>
       <CardContent>
-        <FileUpload
-          onFileSelect={onCSVUpload}
-          onFileRemove={onCSVRemove}
-          accept=".csv"
-          selectedFile={csvFile}
-          disabled={generating}
-        />
+        {hasParticipants ? (
+          <div className="flex items-center gap-2 p-4 border rounded-lg bg-green-50 dark:bg-green-900/20">
+            <CheckCircle className="w-5 h-5 text-green-600" />
+            <span className="text-green-800 dark:text-green-200">
+              {recipients.length} participants uploaded
+            </span>
+          </div>
+        ) : (
+          <FileUpload
+            onFileSelect={handleCSVUpload}
+            onFileRemove={handleCSVRemove}
+            accept=".csv"
+            selectedFile={csvFile}
+            disabled={isUploading}
+          />
+        )}
 
-        {recipients.length > 0 && (
+        {hasParticipants && (
           <div className="mt-6">
             <h4 className="font-medium mb-3">
               Preview ({recipients.length} recipients)
