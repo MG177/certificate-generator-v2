@@ -10,19 +10,66 @@ import { ParticipantManagerSection } from '@/components/participant-manager/part
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { IEvent } from '@/lib/types';
 import { getAllEvents } from '@/lib/actions';
+import { useRouter } from 'next/navigation';
+import {
+  saveAppState,
+  loadAppState,
+  findEventById,
+} from '@/lib/local-storage-utils';
+
+type IView = keyof typeof viewList;
+
+const viewList: { [key: string]: string } = {
+  create: 'create',
+  template: 'template',
+  layout: 'layout',
+  recipients: 'recipients',
+  generate: 'generate',
+};
 
 export default function Home() {
   const [events, setEvents] = useState<IEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<IEvent | null>(null);
-  const [currentView, setCurrentView] = useState<
-    'create' | 'template' | 'layout' | 'recipients' | 'generate'
-  >('create');
+  const [currentView, setCurrentView] = useState<IView>(viewList.create);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  // Load events on component mount
+  // Load events and restore state on component mount
   useEffect(() => {
-    loadEvents();
+    const initializeApp = async () => {
+      try {
+        setLoading(true);
+
+        // Load events first
+        const allEvents = await getAllEvents();
+        setEvents(allEvents);
+
+        // Try to restore previous state
+        const savedState = loadAppState();
+        if (savedState) {
+          // Restore view
+          if (Object.values(viewList).includes(savedState.currentView)) {
+            setCurrentView(savedState.currentView as IView);
+          }
+
+          // Restore selected event if it still exists
+          if (savedState.selectedEventId) {
+            const event = findEventById(allEvents, savedState.selectedEventId);
+            if (event) {
+              setSelectedEvent(event);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error initializing app:', err);
+        setError('Failed to load events');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeApp();
   }, []);
 
   const loadEvents = async () => {
@@ -38,30 +85,55 @@ export default function Home() {
     }
   };
 
+  const navigateView = (view: IView) => {
+    console.log('Navigating to view:', view);
+    setCurrentView(view);
+    // Persist view change
+    saveAppState({
+      currentView: view as string,
+      selectedEventId: selectedEvent?._id?.toString() || null,
+    });
+  };
+
   const handleEventCreated = (event: IEvent) => {
     setEvents((prev) => [event, ...prev]);
     setSelectedEvent(event);
-    setCurrentView('template');
+    navigateView(viewList.template);
   };
 
   const handleEventSelected = (event: IEvent) => {
     setSelectedEvent(event);
+    // Persist selected event
+    saveAppState({
+      currentView: currentView as string,
+      selectedEventId: event._id?.toString() || null,
+    });
     // If event has template, go to layout section, otherwise go to template upload
     if (event.template.base64) {
-      setCurrentView('template');
+      navigateView(viewList.template);
     } else {
-      setCurrentView('template');
+      navigateView(viewList.template);
     }
   };
 
   const handleEventUpdate = (event: IEvent) => {
     setEvents((prev) => prev.map((e) => (e._id === event._id ? event : e)));
     setSelectedEvent(event);
+    // Persist updated event selection
+    saveAppState({
+      currentView: currentView as string,
+      selectedEventId: event._id?.toString() || null,
+    });
   };
 
   const handleEventEdit = (event: IEvent) => {
     setSelectedEvent(event);
-    setCurrentView('template');
+    // Persist selected event
+    saveAppState({
+      currentView: currentView as string,
+      selectedEventId: event._id?.toString() || null,
+    });
+    navigateView(viewList.template);
   };
 
   const handleEventsChange = () => {
@@ -69,17 +141,17 @@ export default function Home() {
   };
 
   const handleEventCreate = () => {
-    setCurrentView('create');
+    navigateView(viewList.create);
   };
 
   const handleTemplateUploaded = () => {
     loadEvents(); // Refresh to get updated event
-    setCurrentView('layout');
+    navigateView(viewList.layout);
   };
 
   const handleLayoutConfigured = () => {
     loadEvents(); // Refresh to get updated event
-    setCurrentView('recipients');
+    navigateView(viewList.recipients);
   };
 
   const handleParticipantsUploaded = () => {
@@ -89,11 +161,11 @@ export default function Home() {
 
   // Back navigation handlers
   const handleBackToTemplate = () => {
-    setCurrentView('template');
+    navigateView(viewList.template);
   };
 
   const handleBackToLayout = () => {
-    setCurrentView('layout');
+    navigateView(viewList.layout);
   };
 
   const getEventStatus = (event: IEvent) => {
@@ -137,11 +209,11 @@ export default function Home() {
       )}
 
       {/* Main Content Views */}
-      {currentView === 'create' && (
+      {currentView === viewList.create && (
         <EventCreationTab onEventCreated={handleEventCreated} />
       )}
 
-      {currentView === 'template' && selectedEvent && (
+      {currentView === viewList.template && selectedEvent && (
         <TemplateUploadSection
           event={selectedEvent}
           onTemplateUploaded={handleTemplateUploaded}
@@ -149,7 +221,7 @@ export default function Home() {
         />
       )}
 
-      {currentView === 'layout' && selectedEvent && (
+      {currentView === viewList.layout && selectedEvent && (
         <TemplateAdjustmentSection
           event={selectedEvent}
           onContinue={handleLayoutConfigured}
@@ -157,7 +229,7 @@ export default function Home() {
         />
       )}
 
-      {currentView === 'recipients' && selectedEvent && (
+      {currentView === viewList.recipients && selectedEvent && (
         <ParticipantManagerSection
           event={selectedEvent}
           onParticipantsUploaded={handleParticipantsUploaded}
@@ -175,7 +247,7 @@ export default function Home() {
       )} */}
 
       {/* No Event Selected State */}
-      {!selectedEvent && currentView !== 'create' && (
+      {!selectedEvent && currentView !== viewList.create && (
         <div className="text-center py-12">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
             <svg
