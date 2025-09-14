@@ -106,7 +106,7 @@ export function ParticipantTable({
       />
 
       {/* Table */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50 dark:bg-gray-800">
@@ -114,7 +114,9 @@ export function ParticipantTable({
                 <Checkbox
                   checked={allSelected}
                   ref={(el) => {
-                    if (el) el.indeterminate = someSelected;
+                    if (el) {
+                      (el as HTMLInputElement).indeterminate = someSelected;
+                    }
                   }}
                   onCheckedChange={handleSelectAll}
                   disabled={disabled}
