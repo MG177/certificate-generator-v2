@@ -9,11 +9,13 @@ import { updateLayoutConfig } from '@/lib/actions';
 interface TemplateAdjustmentSectionProps {
   event: IEvent | null;
   onContinue: () => void;
+  onBack?: () => void;
 }
 
 export function TemplateAdjustmentSection({
   event,
   onContinue,
+  onBack,
 }: TemplateAdjustmentSectionProps) {
   const [selectedTextType, setSelectedTextType] = useState<'name' | 'id'>(
     'name'
@@ -212,13 +214,21 @@ export function TemplateAdjustmentSection({
         </div>
       </div>
 
-      {/* Continue Button */}
-      <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+          >
+            ← Back to Template Upload
+          </button>
+        )}
         <button
           onClick={onContinue}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
         >
-          Continue to Participants
+          Continue to Participants →
         </button>
       </div>
     </div>

@@ -14,11 +14,13 @@ import { CheckCircle, AlertCircle } from 'lucide-react';
 interface ParticipantManagerSectionProps {
   event: IEvent | null;
   onParticipantsUploaded: () => void;
+  onBack?: () => void;
 }
 
 export function ParticipantManagerSection({
   event,
   onParticipantsUploaded,
+  onBack,
 }: ParticipantManagerSectionProps) {
   const [participants, setParticipants] = useState<IRecipientData[]>([]);
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -234,14 +236,22 @@ export function ParticipantManagerSection({
         />
       )}
 
-      {/* Continue Button */}
+      {/* Navigation Buttons */}
       {participants.length > 0 && !showUpload && (
-        <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+            >
+              ← Back to Template Adjustment
+            </button>
+          )}
           <button
             onClick={onParticipantsUploaded}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
-            Continue to Generate
+            Continue to Generate →
           </button>
         </div>
       )}

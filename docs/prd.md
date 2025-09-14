@@ -113,6 +113,7 @@ export interface ITextConfig {
 export interface IRecipientData {
   name: string;
   certification_id: string;
+  email: string;
 }
 ```
 

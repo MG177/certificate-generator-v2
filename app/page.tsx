@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ResponsiveLayout } from '@/components/layout/responsive-layout';
 import { EventCreationTab } from '@/components/event-creation-tab';
-import { TemplateUploadTab } from '@/components/template-upload-tab';
+import { TemplateUploadSection } from '@/components/template-upload-section';
 import { TemplateAdjustmentSection } from '@/components/template-adjustment/template-adjustment-section';
 import { ParticipantManagerSection } from '@/components/participant-manager/participant-manager-section';
 import { CertificateGenerationTab } from '@/components/certificate-generation-tab';
@@ -48,7 +48,7 @@ export default function Home() {
     setSelectedEvent(event);
     // If event has template, go to layout section, otherwise go to template upload
     if (event.template.base64) {
-      setCurrentView('layout');
+      setCurrentView('template');
     } else {
       setCurrentView('template');
     }
@@ -69,12 +69,22 @@ export default function Home() {
   };
 
   const handleLayoutConfigured = () => {
+    loadEvents(); // Refresh to get updated event
     setCurrentView('recipients');
   };
 
   const handleParticipantsUploaded = () => {
     loadEvents(); // Refresh to get updated event
     setCurrentView('generate');
+  };
+
+  // Back navigation handlers
+  const handleBackToTemplate = () => {
+    setCurrentView('template');
+  };
+
+  const handleBackToLayout = () => {
+    setCurrentView('layout');
   };
 
   const getEventStatus = (event: IEvent) => {
@@ -121,9 +131,10 @@ export default function Home() {
       )}
 
       {currentView === 'template' && selectedEvent && (
-        <TemplateUploadTab
+        <TemplateUploadSection
           event={selectedEvent}
           onTemplateUploaded={handleTemplateUploaded}
+          onBack={handleEventCreate}
         />
       )}
 
@@ -131,6 +142,7 @@ export default function Home() {
         <TemplateAdjustmentSection
           event={selectedEvent}
           onContinue={handleLayoutConfigured}
+          onBack={handleBackToTemplate}
         />
       )}
 
@@ -138,6 +150,7 @@ export default function Home() {
         <ParticipantManagerSection
           event={selectedEvent}
           onParticipantsUploaded={handleParticipantsUploaded}
+          onBack={handleBackToLayout}
         />
       )}
 
