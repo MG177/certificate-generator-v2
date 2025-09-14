@@ -105,6 +105,8 @@ export function ParticipantTable({
     );
   }
 
+  console.log(participants);
+
   return (
     <div className="space-y-4">
       {/* Bulk Actions */}

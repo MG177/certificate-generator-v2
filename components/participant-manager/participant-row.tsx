@@ -19,6 +19,7 @@ interface ParticipantRowProps {
   onSelectionChange: (index: number, selected: boolean) => void;
   onAction: (action: IParticipantAction, participant: IRecipientData) => void;
   isDownloading?: boolean;
+  isSending?: boolean;
 }
 
 export function ParticipantRow({
@@ -28,6 +29,7 @@ export function ParticipantRow({
   onSelectionChange,
   onAction,
   isDownloading = false,
+  isSending = false,
 }: ParticipantRowProps) {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 
@@ -39,16 +41,6 @@ export function ParticipantRow({
     onAction(action, participant);
     setIsActionMenuOpen(false);
   };
-
-  // Mock email for display (in real app, this would come from participant data)
-  const email = `${participant.name
-    .toLowerCase()
-    .replace(/\s+/g, '.')}@example.com`;
-
-  // Mock last email date (in real app, this would come from participant data)
-  const lastEmail = new Date(
-    Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
-  );
 
   return (
     <tr className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
@@ -70,7 +62,9 @@ export function ParticipantRow({
 
       {/* Email Column */}
       <td className="p-4">
-        <div className="text-sm text-gray-600 dark:text-gray-400">{email}</div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          {participant.email || '-'}
+        </div>
       </td>
 
       {/* Certificate ID Column */}
@@ -83,13 +77,13 @@ export function ParticipantRow({
       {/* Last Email Column */}
       <td className="p-4">
         <div className="text-sm text-gray-600 dark:text-gray-400">
-          {lastEmail.toLocaleDateString('en-US', {
+          {participant.lastEmailSent?.toLocaleDateString('en-US', {
             day: 'numeric',
             month: 'short',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-          })}
+          }) || '-'}
         </div>
       </td>
 
@@ -119,6 +113,7 @@ export function ParticipantRow({
             onClick={() => handleAction('send')}
             className="h-8 w-8 p-0"
             data-testid={`send-email-${index}`}
+            disabled={isSending || isDownloading || !participant.email}
           >
             <Send className="h-4 w-4" />
           </Button>

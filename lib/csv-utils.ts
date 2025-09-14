@@ -12,14 +12,19 @@ export function parseCSV(csvContent: string): IRecipientData[] {
   const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
 
   // Validate headers
-  if (!headers.includes('name') || !headers.includes('certification_id')) {
+  if (
+    !headers.includes('name') ||
+    !headers.includes('certification_id') ||
+    !headers.includes('email')
+  ) {
     throw new Error(
-      'CSV file must contain "name" and "certification_id" columns'
+      'CSV file must contain "name", "certification_id" and "email" columns'
     );
   }
 
   const nameIndex = headers.indexOf('name');
   const certIdIndex = headers.indexOf('certification_id');
+  const emailIndex = headers.indexOf('email');
 
   const recipients: IRecipientData[] = [];
   const seenCertIds = new Set<string>();
@@ -34,8 +39,8 @@ export function parseCSV(csvContent: string): IRecipientData[] {
 
     const name = values[nameIndex];
     const certification_id = values[certIdIndex];
-
-    console.log(name, certification_id);
+    const email = values[emailIndex];
+    console.log(name, certification_id, email);
 
     if (!name || !certification_id) {
       console.warn(`Skipping row ${i + 1}: missing required data`);
@@ -51,7 +56,7 @@ export function parseCSV(csvContent: string): IRecipientData[] {
     }
 
     seenCertIds.add(certification_id);
-    recipients.push({ name, certification_id });
+    recipients.push({ name, certification_id, email });
   }
 
   if (recipients.length === 0) {

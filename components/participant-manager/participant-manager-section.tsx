@@ -71,7 +71,7 @@ export function ParticipantManagerSection({
 
   const downloadCSVTemplate = () => {
     const csvContent =
-      'name,certification_id\nJohn Doe,CERT-001\nJane Smith,CERT-002\nBob Johnson,CERT-003';
+      'name,certification_id,email\nJohn Doe,CERT-001,john@example.com\nJane Smith,CERT-002,jane@example.com\nBob Johnson,CERT-003,bob@example.com';
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -617,7 +617,7 @@ export function ParticipantManagerSection({
         </div>
       )}
 
-      {/* Navigation Buttons
+      {/* Navigation Buttons */}
       {participants.length > 0 && !showUpload && (
         <div className="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
           {onBack && (
@@ -628,14 +628,14 @@ export function ParticipantManagerSection({
               ← Back to Template Adjustment
             </button>
           )}
-          <button
+          {/* <button
             onClick={onParticipantsUploaded}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
             Continue to Generate →
-          </button>
+          </button> */}
         </div>
-      )} */}
+      )}
 
       {/* Edit Participant Dialog */}
       <EditParticipantDialog
