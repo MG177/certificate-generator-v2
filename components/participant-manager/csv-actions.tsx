@@ -26,7 +26,7 @@ export function CSVActions({
         data-testid="download-csv-button"
       >
         <Download className="w-4 h-4" />
-        Download CSV
+        Download CSV Template
       </Button>
       <Button
         onClick={onUpload}
