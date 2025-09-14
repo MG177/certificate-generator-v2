@@ -11,6 +11,9 @@ interface SidebarProps {
   selectedEvent: IEvent | null;
   onEventSelect: (event: IEvent) => void;
   onEventCreate: () => void;
+  onEventEdit?: (event: IEvent) => void;
+  onEventUpdate?: (event: IEvent) => void;
+  onEventsChange?: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   isCollapsed: boolean;
@@ -22,6 +25,9 @@ export function Sidebar({
   selectedEvent,
   onEventSelect,
   onEventCreate,
+  onEventEdit,
+  onEventUpdate,
+  onEventsChange,
   searchQuery,
   onSearchChange,
   isCollapsed,
@@ -74,6 +80,9 @@ export function Sidebar({
           events={events}
           selectedEvent={selectedEvent}
           onEventSelect={onEventSelect}
+          onEventEdit={onEventEdit}
+          onEventUpdate={onEventUpdate}
+          onEventsChange={onEventsChange}
           isCollapsed={isCollapsed}
         />
       </div>

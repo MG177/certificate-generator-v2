@@ -109,13 +109,16 @@ export async function getEvent(eventId: string): Promise<IEvent | null> {
   }
 }
 
-export async function getAllEvents(): Promise<IEvent[]> {
+export async function getAllEvents(
+  includeDeleted: boolean = false
+): Promise<IEvent[]> {
   try {
     const db = await getDatabase();
     const eventsCollection = db.collection('events');
 
+    const filter = includeDeleted ? {} : { isDeleted: { $ne: true } };
     const events = await eventsCollection
-      .find({})
+      .find(filter)
       .sort({ createdAt: -1 })
       .toArray();
 
@@ -123,6 +126,105 @@ export async function getAllEvents(): Promise<IEvent[]> {
   } catch (error) {
     console.error('Error getting all events:', error);
     throw new Error('Failed to get events');
+  }
+}
+
+export async function softDeleteEvent(eventId: string): Promise<boolean> {
+  try {
+    const db = await getDatabase();
+    const eventsCollection = db.collection('events');
+
+    const result = await eventsCollection.updateOne(
+      { _id: new ObjectId(eventId) },
+      {
+        $set: {
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      }
+    );
+    return result.modifiedCount > 0;
+  } catch (error) {
+    console.error('Error soft deleting event:', error);
+    throw new Error('Failed to soft delete event');
+  }
+}
+
+export async function restoreEvent(eventId: string): Promise<boolean> {
+  try {
+    const db = await getDatabase();
+    const eventsCollection = db.collection('events');
+
+    const result = await eventsCollection.updateOne(
+      { _id: new ObjectId(eventId) },
+      {
+        $unset: {
+          isDeleted: '',
+          deletedAt: '',
+        },
+        $set: {
+          updatedAt: new Date(),
+        },
+      }
+    );
+    return result.modifiedCount > 0;
+  } catch (error) {
+    console.error('Error restoring event:', error);
+    throw new Error('Failed to restore event');
+  }
+}
+
+export async function duplicateEvent(eventId: string): Promise<IEvent> {
+  try {
+    const originalEvent = await getEvent(eventId);
+    if (!originalEvent) {
+      throw new Error('Event not found');
+    }
+
+    const duplicatedEvent = {
+      ...originalEvent,
+      _id: undefined, // Remove ID so it creates a new one
+      title: `${originalEvent.title} (Copy)`,
+      status: 'draft' as const,
+      isDeleted: false,
+      deletedAt: undefined,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    return await createEvent(duplicatedEvent);
+  } catch (error) {
+    console.error('Error duplicating event:', error);
+    throw new Error('Failed to duplicate event');
+  }
+}
+
+export async function archiveEvent(eventId: string): Promise<boolean> {
+  try {
+    return (
+      (await updateEvent(eventId, {
+        status: 'archived',
+        updatedAt: new Date(),
+      })) !== null
+    );
+  } catch (error) {
+    console.error('Error archiving event:', error);
+    throw new Error('Failed to archive event');
+  }
+}
+
+export async function unarchiveEvent(eventId: string): Promise<boolean> {
+  try {
+    return (
+      (await updateEvent(eventId, {
+        status: 'draft',
+        updatedAt: new Date(),
+      })) !== null
+    );
+  } catch (error) {
+    console.error('Error unarchiving event:', error);
+    throw new Error('Failed to unarchive event');
   }
 }
 

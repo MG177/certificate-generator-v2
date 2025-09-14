@@ -59,6 +59,15 @@ export default function Home() {
     setSelectedEvent(event);
   };
 
+  const handleEventEdit = (event: IEvent) => {
+    setSelectedEvent(event);
+    setCurrentView('template');
+  };
+
+  const handleEventsChange = () => {
+    loadEvents(); // Refresh events list
+  };
+
   const handleEventCreate = () => {
     setCurrentView('create');
   };
@@ -116,6 +125,8 @@ export default function Home() {
       onEventSelect={handleEventSelected}
       onEventCreate={handleEventCreate}
       onEventUpdate={handleEventUpdate}
+      onEventEdit={handleEventEdit}
+      onEventsChange={handleEventsChange}
     >
       {error && (
         <Alert className="mb-6 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20">

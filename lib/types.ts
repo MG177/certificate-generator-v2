@@ -6,6 +6,8 @@ export interface IEvent {
   description?: string;
   eventDate: Date;
   status: 'draft' | 'completed' | 'archived';
+  isDeleted?: boolean; // Soft delete flag
+  deletedAt?: Date; // When it was soft deleted
   template: {
     base64: string; // Base64 encoded PNG template
     originalName: string;

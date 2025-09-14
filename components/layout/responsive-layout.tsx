@@ -11,6 +11,8 @@ interface ResponsiveLayoutProps {
   onEventSelect: (event: IEvent) => void;
   onEventCreate: () => void;
   onEventUpdate: (event: IEvent) => void;
+  onEventEdit?: (event: IEvent) => void;
+  onEventsChange?: () => void;
   children?: React.ReactNode;
 }
 
@@ -20,6 +22,8 @@ export function ResponsiveLayout({
   onEventSelect,
   onEventCreate,
   onEventUpdate,
+  onEventEdit,
+  onEventsChange,
   children,
 }: ResponsiveLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -49,6 +53,8 @@ export function ResponsiveLayout({
           selectedEvent={selectedEvent}
           onEventSelect={onEventSelect}
           onEventCreate={onEventCreate}
+          onEventEdit={onEventEdit}
+          onEventsChange={onEventsChange}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           isCollapsed={isSidebarCollapsed}
