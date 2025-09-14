@@ -8,22 +8,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Download, Send, Trash2, MoreHorizontal } from 'lucide-react';
+import { Download, Send, MoreHorizontal, Loader2 } from 'lucide-react';
+import { IParticipantAction } from '@/lib/types';
 
 interface BulkActionsProps {
   selectedCount: number;
-  onBulkAction: (action: string) => void;
+  onBulkAction: (action: IParticipantAction) => void;
   disabled?: boolean;
+  isDownloading?: boolean;
+  isExporting?: boolean;
 }
 
 export function BulkActions({
   selectedCount,
   onBulkAction,
   disabled = false,
+  isDownloading = false,
+  isExporting = false,
 }: BulkActionsProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleAction = (action: string) => {
+  const handleAction = (action: IParticipantAction) => {
     onBulkAction(action);
     setIsMenuOpen(false);
   };
@@ -44,11 +49,15 @@ export function BulkActions({
           variant="outline"
           size="sm"
           onClick={() => handleAction('download')}
-          disabled={disabled}
+          disabled={disabled || isDownloading}
           className="flex items-center gap-2"
         >
-          <Download className="h-4 w-4" />
-          Download Certificates
+          {isDownloading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
+          {isDownloading ? 'Generating...' : 'Download Certificates'}
         </Button>
 
         {/* Send Emails to Selected */}
@@ -76,11 +85,15 @@ export function BulkActions({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleAction('export')}>
-              Export Selected
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleAction('duplicate')}>
-              Duplicate Selected
+            <DropdownMenuItem
+              onClick={() => handleAction('export')}
+              disabled={disabled || isExporting}
+              className="flex items-center gap-2"
+            >
+              {isExporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}
+              {isExporting ? 'Exporting...' : 'Export Selected'}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => handleAction('delete')}

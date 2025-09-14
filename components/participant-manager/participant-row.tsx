@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { IRecipientData } from '@/lib/types';
+import { IParticipantAction, IRecipientData } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +17,8 @@ interface ParticipantRowProps {
   index: number;
   isSelected: boolean;
   onSelectionChange: (index: number, selected: boolean) => void;
-  onAction: (action: string, participant: IRecipientData) => void;
+  onAction: (action: IParticipantAction, participant: IRecipientData) => void;
+  isDownloading?: boolean;
 }
 
 export function ParticipantRow({
@@ -26,6 +27,7 @@ export function ParticipantRow({
   isSelected,
   onSelectionChange,
   onAction,
+  isDownloading = false,
 }: ParticipantRowProps) {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 
@@ -33,7 +35,7 @@ export function ParticipantRow({
     onSelectionChange(index, checked);
   };
 
-  const handleAction = (action: string) => {
+  const handleAction = (action: IParticipantAction) => {
     onAction(action, participant);
     setIsActionMenuOpen(false);
   };
@@ -100,9 +102,14 @@ export function ParticipantRow({
             size="sm"
             onClick={() => handleAction('download')}
             className="h-8 w-8 p-0"
+            disabled={isDownloading}
             data-testid={`download-certificate-${index}`}
           >
-            <Download className="h-4 w-4" />
+            {isDownloading ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
           </Button>
 
           {/* Send Email Button */}
@@ -135,9 +142,9 @@ export function ParticipantRow({
               <DropdownMenuItem onClick={() => handleAction('edit')}>
                 Edit Participant
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleAction('duplicate')}>
+              {/* <DropdownMenuItem onClick={() => handleAction('duplicate')}>
                 Duplicate
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem
                 onClick={() => handleAction('delete')}
                 className="text-red-600 dark:text-red-400"

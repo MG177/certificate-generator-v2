@@ -98,3 +98,10 @@ export const FONT_FAMILIES = [
 ] as const;
 
 export type FontFamily = (typeof FONT_FAMILIES)[number];
+
+export type IParticipantAction =
+  | 'download'
+  | 'send'
+  | 'edit'
+  | 'delete'
+  | 'export';

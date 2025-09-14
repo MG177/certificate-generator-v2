@@ -79,3 +79,54 @@ export function validateCSVFormat(file: File): Promise<boolean> {
     reader.readAsText(file);
   });
 }
+
+/**
+ * Downloads a CSV file to the user's device
+ * @param csvContent - The CSV content as a string
+ * @param filename - The name of the CSV file to download
+ */
+export function downloadCSV(csvContent: string, filename: string): void {
+  try {
+    // Create blob from CSV content
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    // Create download URL
+    const url = URL.createObjectURL(blob);
+
+    // Create temporary link element
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+
+    // Append to DOM, click, and remove
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Clean up the URL object
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error downloading CSV:', error);
+    throw new Error('Failed to download CSV');
+  }
+}
+
+/**
+ * Generates a filename for a CSV export
+ * @param eventTitle - The event title
+ * @param participantCount - Number of participants
+ * @returns A sanitized filename
+ */
+export function generateCSVFilename(
+  eventTitle: string,
+  participantCount: number
+): string {
+  // Sanitize event title for filename
+  const sanitizedTitle = eventTitle
+    .replace(/[^a-zA-Z0-9\s-_]/g, '') // Remove special characters
+    .replace(/\s+/g, '_') // Replace spaces with underscores
+    .toLowerCase();
+
+  const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  return `participants_${sanitizedTitle}_${participantCount}_${timestamp}.csv`;
+}

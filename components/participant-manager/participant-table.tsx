@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { IRecipientData } from '@/lib/types';
+import { IParticipantAction, IRecipientData } from '@/lib/types';
 import { ParticipantRow } from './participant-row';
 import { BulkActions } from './bulk-actions';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -16,9 +16,15 @@ import {
 
 interface ParticipantTableProps {
   participants: IRecipientData[];
-  onParticipantAction: (action: string, participant: IRecipientData) => void;
-  onBulkAction: (action: string, participantIds: string[]) => void;
+  onParticipantAction: (
+    action: IParticipantAction,
+    participant: IRecipientData
+  ) => void;
+  onBulkAction: (action: IParticipantAction, participantIds: string[]) => void;
   disabled?: boolean;
+  downloadingParticipants?: Set<string>;
+  isBulkDownloading?: boolean;
+  isExportingCSV?: boolean;
 }
 
 export function ParticipantTable({
@@ -26,6 +32,9 @@ export function ParticipantTable({
   onParticipantAction,
   onBulkAction,
   disabled = false,
+  downloadingParticipants = new Set(),
+  isBulkDownloading = false,
+  isExportingCSV = false,
 }: ParticipantTableProps) {
   const [selectedParticipants, setSelectedParticipants] = useState<Set<number>>(
     new Set()
@@ -54,7 +63,7 @@ export function ParticipantTable({
     setSelectedParticipants(newSelected);
   };
 
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = (action: IParticipantAction) => {
     const selectedParticipantIds = Array.from(selectedParticipants).map(
       (index) => participants[index].certification_id
     );
@@ -62,7 +71,7 @@ export function ParticipantTable({
   };
 
   const handleParticipantAction = (
-    action: string,
+    action: IParticipantAction,
     participant: IRecipientData
   ) => {
     onParticipantAction(action, participant);
@@ -103,6 +112,8 @@ export function ParticipantTable({
         selectedCount={selectedCount}
         onBulkAction={handleBulkAction}
         disabled={disabled}
+        isDownloading={isBulkDownloading}
+        isExporting={isExportingCSV}
       />
 
       {/* Table */}
@@ -148,6 +159,9 @@ export function ParticipantTable({
                 isSelected={selectedParticipants.has(index)}
                 onSelectionChange={handleSelectParticipant}
                 onAction={handleParticipantAction}
+                isDownloading={downloadingParticipants.has(
+                  participant.certification_id
+                )}
               />
             ))}
           </TableBody>
