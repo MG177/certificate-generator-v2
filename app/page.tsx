@@ -6,7 +6,7 @@ import { EventCreationTab } from '@/components/event-creation-tab';
 import { TemplateUploadSection } from '@/components/template-upload-section';
 import { TemplateAdjustmentSection } from '@/components/template-adjustment/template-adjustment-section';
 import { ParticipantManagerSection } from '@/components/participant-manager/participant-manager-section';
-import { CertificateGenerationTab } from '@/components/certificate-generation-tab';
+// import { CertificateGenerationTab } from '@/components/certificate-generation-tab';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { IEvent } from '@/lib/types';
 import { getAllEvents } from '@/lib/actions';
@@ -84,7 +84,7 @@ export default function Home() {
 
   const handleParticipantsUploaded = () => {
     loadEvents(); // Refresh to get updated event
-    setCurrentView('generate');
+    // setCurrentView('generate');
   };
 
   // Back navigation handlers
@@ -165,14 +165,14 @@ export default function Home() {
         />
       )}
 
-      {currentView === 'generate' && selectedEvent && (
+      {/* {currentView === 'generate' && selectedEvent && (
         <CertificateGenerationTab
           event={selectedEvent}
           onCertificatesGenerated={() => {
             loadEvents();
           }}
         />
-      )}
+      )} */}
 
       {/* No Event Selected State */}
       {!selectedEvent && currentView !== 'create' && (

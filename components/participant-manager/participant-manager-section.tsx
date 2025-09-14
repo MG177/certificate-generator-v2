@@ -617,7 +617,7 @@ export function ParticipantManagerSection({
         </div>
       )}
 
-      {/* Navigation Buttons */}
+      {/* Navigation Buttons
       {participants.length > 0 && !showUpload && (
         <div className="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
           {onBack && (
@@ -635,7 +635,7 @@ export function ParticipantManagerSection({
             Continue to Generate →
           </button>
         </div>
-      )}
+      )} */}
 
       {/* Edit Participant Dialog */}
       <EditParticipantDialog
