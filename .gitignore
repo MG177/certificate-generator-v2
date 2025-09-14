@@ -37,3 +37,5 @@ next-env.d.ts
 
 # template images
 /public/uploads
+
+.playwright-mcp
