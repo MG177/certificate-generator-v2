@@ -155,3 +155,14 @@ export interface IEmailTemplate {
   html: string;
   text: string;
 }
+
+export const viewList: { [key: string]: string } = {
+  create: 'create',
+  template: 'template',
+  layout: 'layout',
+  recipients: 'email distribution',
+  email: 'email status',
+  // generate: 'generate',
+};
+
+export type IView = keyof typeof viewList;

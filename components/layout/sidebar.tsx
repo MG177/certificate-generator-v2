@@ -7,7 +7,7 @@ import { EventList } from '../sidebar/event-list';
 import { CreateEventButton } from '../sidebar/create-event-button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { IView, viewList } from '@/app/page';
+import { IView, viewList } from '@/lib/types';
 
 interface SidebarProps {
   events: IEvent[];

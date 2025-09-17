@@ -15,17 +15,7 @@ import {
   loadAppState,
   findEventById,
 } from '@/lib/local-storage-utils';
-
-export type IView = keyof typeof viewList;
-
-export const viewList: { [key: string]: string } = {
-  create: 'create',
-  template: 'template',
-  layout: 'layout',
-  recipients: 'email distribution',
-  email: 'email status',
-  // generate: 'generate',
-};
+import { IView, viewList } from '@/lib/types';
 
 export default function Home() {
   const [events, setEvents] = useState<IEvent[]>([]);

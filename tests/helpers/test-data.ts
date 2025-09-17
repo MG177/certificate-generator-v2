@@ -145,7 +145,7 @@ export const createTestEmailData = () => ({
 export const createTestSMTPError = (
   message: string = 'SMTP connection failed'
 ) => {
-  const error = new Error(message);
+  const error = new Error(message) as Error & { code: string };
   error.code = 'ECONNREFUSED';
   return error;
 };
@@ -153,7 +153,7 @@ export const createTestSMTPError = (
 export const createTestAuthError = (
   message: string = 'Authentication failed'
 ) => {
-  const error = new Error(message);
+  const error = new Error(message) as Error & { code: string };
   error.code = 'EAUTH';
   return error;
 };
@@ -161,7 +161,7 @@ export const createTestAuthError = (
 export const createTestRateLimitError = (
   message: string = 'Rate limit exceeded'
 ) => {
-  const error = new Error(message);
+  const error = new Error(message) as Error & { code: string };
   error.code = 'EENVELOPE';
   return error;
 };
@@ -169,7 +169,7 @@ export const createTestRateLimitError = (
 export const createTestNetworkError = (
   message: string = 'Network unreachable'
 ) => {
-  const error = new Error(message);
+  const error = new Error(message) as Error & { code: string };
   error.code = 'ENOTFOUND';
   return error;
 };

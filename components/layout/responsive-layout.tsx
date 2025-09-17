@@ -5,7 +5,7 @@ import { Sidebar } from './sidebar';
 import { MainContent } from './main-content';
 import { IEvent } from '@/lib/types';
 import { DatabaseHealthCheck } from '../database';
-import { IView } from '@/app/page';
+import { IView } from '@/lib/types';
 
 interface ResponsiveLayoutProps {
   events: IEvent[];
