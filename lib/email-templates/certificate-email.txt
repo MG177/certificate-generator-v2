@@ -1,0 +1,33 @@
+CERTIFICATE OF COMPLETION
+========================
+
+Dear {participantName},
+
+Congratulations! You have successfully completed the event and earned your certificate.
+
+CERTIFICATE DETAILS
+-------------------
+Participant Name: {participantName}
+Event Title: {eventTitle}
+Certificate ID: {certificateId}
+Completion Date: {eventDate}
+
+CERTIFICATE ATTACHMENT
+----------------------
+Your official certificate is attached to this email as a PNG file. 
+Please download and save it for your records.
+
+This certificate serves as official proof of your participation and completion. 
+We recommend keeping it in a safe place for future reference.
+
+If you have any questions about this certificate or need assistance, 
+please don't hesitate to contact us.
+
+Congratulations once again on your achievement!
+
+Best regards,
+Certificate Generator Team
+
+---
+This is an automated message. Please do not reply to this email.
+Generated on {currentDate}

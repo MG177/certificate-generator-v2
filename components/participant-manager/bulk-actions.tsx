@@ -9,7 +9,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Download, Send, MoreHorizontal, Loader2 } from 'lucide-react';
-import { IParticipantAction } from '@/lib/types';
+import { IParticipantAction, IRecipientData } from '@/lib/types';
+import { BulkEmailActions } from '@/components/email';
 
 interface BulkActionsProps {
   selectedCount: number;
@@ -17,6 +18,12 @@ interface BulkActionsProps {
   disabled?: boolean;
   isDownloading?: boolean;
   isExporting?: boolean;
+  isSendingEmails?: boolean;
+  onBulkSendEmails?: (participantIds: string[]) => void;
+  eventId?: string;
+  participants?: IRecipientData[];
+  selectedParticipantIds?: string[];
+  isEmailConfigured?: boolean;
 }
 
 export function BulkActions({
@@ -25,6 +32,12 @@ export function BulkActions({
   disabled = false,
   isDownloading = false,
   isExporting = false,
+  isSendingEmails = false,
+  onBulkSendEmails,
+  eventId,
+  participants = [],
+  selectedParticipantIds = [],
+  isEmailConfigured = false,
 }: BulkActionsProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -61,16 +74,29 @@ export function BulkActions({
         </Button>
 
         {/* Send Emails to Selected */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleAction('send')}
-          disabled={disabled}
-          className="flex items-center gap-2"
-        >
-          <Send className="h-4 w-4" />
-          Send Emails
-        </Button>
+        {eventId && (
+          <BulkEmailActions
+            eventId={eventId}
+            participants={participants}
+            selectedParticipantIds={selectedParticipantIds}
+            onEmailSent={() => onBulkSendEmails?.(selectedParticipantIds)}
+            disabled={disabled}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={disabled || isSendingEmails || !isEmailConfigured}
+              className="flex items-center gap-2"
+            >
+              {isSendingEmails ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              {isSendingEmails ? 'Sending...' : 'Send Emails'}
+            </Button>
+          </BulkEmailActions>
+        )}
 
         {/* More Actions Menu */}
         <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>

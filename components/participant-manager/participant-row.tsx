@@ -19,7 +19,9 @@ interface ParticipantRowProps {
   onSelectionChange: (index: number, selected: boolean) => void;
   onAction: (action: IParticipantAction, participant: IRecipientData) => void;
   isDownloading?: boolean;
-  isSending?: boolean;
+  isSendingEmail?: boolean;
+  onRetryFailedEmail?: (participant: IRecipientData) => void;
+  isEmailConfigured?: boolean;
 }
 
 export function ParticipantRow({
@@ -29,7 +31,9 @@ export function ParticipantRow({
   onSelectionChange,
   onAction,
   isDownloading = false,
-  isSending = false,
+  isSendingEmail = false,
+  onRetryFailedEmail,
+  isEmailConfigured = false,
 }: ParticipantRowProps) {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 
@@ -76,14 +80,44 @@ export function ParticipantRow({
 
       {/* Last Email Column */}
       <td className="p-4">
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          {participant.lastEmailSent?.toLocaleDateString('en-US', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          }) || '-'}
+        <div className="flex flex-col gap-1">
+          {participant.emailStatus && (
+            <div className="flex items-center gap-1">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  participant.emailStatus === 'sent'
+                    ? 'bg-green-500'
+                    : participant.emailStatus === 'failed'
+                    ? 'bg-red-500'
+                    : participant.emailStatus === 'pending'
+                    ? 'bg-yellow-500'
+                    : 'bg-gray-400'
+                }`}
+              />
+              <span className="text-xs font-medium capitalize">
+                {participant.emailStatus.replace('_', ' ')}
+              </span>
+            </div>
+          )}
+          <div
+            className={`text-sm ${
+              participant.emailError
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            {participant.emailError
+              ? participant.emailError
+              : participant.lastEmailSent
+              ? participant.lastEmailSent.toLocaleDateString('en-US', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : '-'}
+          </div>
         </div>
       </td>
 
@@ -110,12 +144,25 @@ export function ParticipantRow({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleAction('send')}
+            onClick={() =>
+              participant.emailStatus === 'failed' && onRetryFailedEmail
+                ? onRetryFailedEmail(participant)
+                : handleAction('send')
+            }
             className="h-8 w-8 p-0"
             data-testid={`send-email-${index}`}
-            disabled={isSending || isDownloading || !participant.email}
+            disabled={
+              isSendingEmail ||
+              isDownloading ||
+              !participant.email ||
+              !isEmailConfigured
+            }
           >
-            <Send className="h-4 w-4" />
+            {isSendingEmail ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
 
           {/* More Actions Menu */}

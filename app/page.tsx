@@ -6,25 +6,25 @@ import { EventCreationTab } from '@/components/event-creation-tab';
 import { TemplateUploadSection } from '@/components/template-upload-section';
 import { TemplateAdjustmentSection } from '@/components/template-adjustment/template-adjustment-section';
 import { ParticipantManagerSection } from '@/components/participant-manager/participant-manager-section';
-// import { CertificateGenerationTab } from '@/components/certificate-generation-tab';
+import { EmailStatusDashboard } from '@/components/email';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { IEvent } from '@/lib/types';
 import { getAllEvents } from '@/lib/actions';
-import { useRouter } from 'next/navigation';
 import {
   saveAppState,
   loadAppState,
   findEventById,
 } from '@/lib/local-storage-utils';
 
-type IView = keyof typeof viewList;
+export type IView = keyof typeof viewList;
 
-const viewList: { [key: string]: string } = {
+export const viewList: { [key: string]: string } = {
   create: 'create',
   template: 'template',
   layout: 'layout',
-  recipients: 'recipients',
-  generate: 'generate',
+  recipients: 'email distribution',
+  email: 'email status',
+  // generate: 'generate',
 };
 
 export default function Home() {
@@ -33,7 +33,6 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<IView>(viewList.create);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   // Load events and restore state on component mount
   useEffect(() => {
@@ -168,12 +167,6 @@ export default function Home() {
     navigateView(viewList.layout);
   };
 
-  const getEventStatus = (event: IEvent) => {
-    if (!event.template.base64) return 'no-template';
-    if (event.participants.length === 0) return 'no-participants';
-    return 'ready';
-  };
-
   const canGenerate =
     selectedEvent &&
     selectedEvent.template.base64 &&
@@ -199,6 +192,8 @@ export default function Home() {
       onEventUpdate={handleEventUpdate}
       onEventEdit={handleEventEdit}
       onEventsChange={handleEventsChange}
+      currentView={currentView as IView}
+      onViewChange={navigateView}
     >
       {error && (
         <Alert className="mb-6 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20">
@@ -237,14 +232,13 @@ export default function Home() {
         />
       )}
 
-      {/* {currentView === 'generate' && selectedEvent && (
-        <CertificateGenerationTab
-          event={selectedEvent}
-          onCertificatesGenerated={() => {
-            loadEvents();
-          }}
+      {currentView === viewList.email && selectedEvent && (
+        <EmailStatusDashboard
+          eventId={selectedEvent._id!.toString()}
+          participants={selectedEvent.participants}
+          onEmailRetry={handleParticipantsUploaded}
         />
-      )} */}
+      )}
 
       {/* No Event Selected State */}
       {!selectedEvent && currentView !== viewList.create && (

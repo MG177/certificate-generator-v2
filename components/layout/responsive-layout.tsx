@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Sidebar } from './sidebar';
 import { MainContent } from './main-content';
 import { IEvent } from '@/lib/types';
+import { DatabaseHealthCheck } from '../database';
+import { IView } from '@/app/page';
 
 interface ResponsiveLayoutProps {
   events: IEvent[];
@@ -13,6 +15,8 @@ interface ResponsiveLayoutProps {
   onEventUpdate: (event: IEvent) => void;
   onEventEdit?: (event: IEvent) => void;
   onEventsChange?: () => void;
+  currentView: IView;
+  onViewChange: (view: IView) => void;
   children?: React.ReactNode;
 }
 
@@ -24,10 +28,13 @@ export function ResponsiveLayout({
   onEventUpdate,
   onEventEdit,
   onEventsChange,
+  currentView,
+  onViewChange,
   children,
 }: ResponsiveLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const environment = process.env.ENVIRONMENT;
 
   const filteredEvents = events.filter(
     (event) =>
@@ -59,6 +66,8 @@ export function ResponsiveLayout({
           onSearchChange={setSearchQuery}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          currentView={currentView}
+          onViewChange={onViewChange}
         />
       </div>
 
@@ -70,6 +79,14 @@ export function ResponsiveLayout({
         >
           {children}
         </MainContent>
+
+        {/* Database Health Check */}
+        <div
+          className="absolute bottom-2 right-2"
+          hidden={environment == 'development'}
+        >
+          <DatabaseHealthCheck />
+        </div>
       </div>
     </div>
   );

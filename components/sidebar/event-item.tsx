@@ -14,6 +14,7 @@ import {
   RotateCcw,
   Check,
   X,
+  Settings,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -44,6 +45,7 @@ import {
 import { useState, useEffect } from 'react';
 import { updateEvent } from '@/lib/actions';
 import { toast } from '@/hooks/use-toast';
+import { EmailConfigDialog } from '../email/email-config-dialog';
 
 interface EventItemProps {
   event: IEvent;
@@ -86,6 +88,8 @@ export function EventItem({
     if (event.status === 'archived') return 'archived';
     if (!event.template.base64) return 'no-template';
     if (event.participants.length === 0) return 'no-participants';
+    if (!event.emailConfig || !event.emailConfig.enabled)
+      return 'no-email-config';
     return 'ready';
   };
 
@@ -97,6 +101,8 @@ export function EventItem({
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
       case 'no-participants':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'no-email-config':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
       case 'archived':
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
       case 'deleted':
@@ -114,6 +120,8 @@ export function EventItem({
         return 'No Template';
       case 'no-participants':
         return 'No Participants';
+      case 'no-email-config':
+        return 'No Email Config';
       case 'archived':
         return 'Archived';
       case 'deleted':
@@ -454,6 +462,23 @@ export function EventItem({
             )}
           </div>
         </div>
+
+        {/* Email Configuration Dialog */}
+        {event && (
+          <div className="mt-2">
+            <EmailConfigDialog
+              eventId={event._id!.toString()}
+              currentConfig={event.emailConfig}
+              currentTemplate={event.emailTemplate}
+              onConfigUpdate={onEventsChange}
+            >
+              <Button variant="outline" size="sm" className="w-full">
+                <Settings className="h-4 w-4 mr-2" />
+                Email Settings
+              </Button>
+            </EmailConfigDialog>
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Dialog */}

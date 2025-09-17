@@ -106,7 +106,7 @@ export function EditParticipantDialog({
       const updatedParticipant: IRecipientData = {
         name: formData.name.trim(),
         certification_id: formData.certification_id.trim(),
-        email: formData.email.trim() || '',
+        email: formData.email?.trim() || '',
       };
 
       await onSave(updatedParticipant);

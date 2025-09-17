@@ -20,9 +20,9 @@ This document outlines the implementation plan for all participant management ac
 - `export` - Export selected participants as CSV
 - `delete` - Delete selected participants
 
-**Excluded Actions:**
+**Included Actions:**
 
-- `send` - Send email (excluded as per requirements)
+- `send` - Send email via Nodemailer (now included - see email implementation plan)
 
 ### Current Implementation Status
 
@@ -40,7 +40,9 @@ This document outlines the implementation plan for all participant management ac
 - Participant deletion (individual and bulk)
 - Selected participants certificate download
 - CSV export functionality
+- Email sending functionality (individual and bulk)
 - UI components for editing participants
+- Email status tracking and management
 
 ## Implementation Plan
 
@@ -185,23 +187,74 @@ This document outlines the implementation plan for all participant management ac
   - Add loading state for CSV export
   - Add error handling
 
-### Phase 6: UI Enhancements and Polish (1-2 hours)
+### Phase 6: Email Functionality Implementation (8-12 hours)
 
-#### 6.1 Add Loading States
+#### 6.1 Email Service Setup (2-3 hours)
+
+- **File:** `lib/email-service.ts`
+- **Function:** Core email sending functionality using Nodemailer
+- **Implementation:**
+  - SMTP connection management
+  - Email template rendering
+  - Error handling and retry logic
+  - Rate limiting implementation
+
+#### 6.2 Email Server Actions (2-3 hours)
+
+- **File:** `lib/actions.ts`
+- **Functions:**
+  - `sendParticipantEmail(eventId: string, participantId: string): Promise<boolean>`
+  - `sendBulkEmails(eventId: string, participantIds: string[]): Promise<EmailResult>`
+  - `getEmailStatus(eventId: string, participantId: string): Promise<EmailStatus>`
+- **Purpose:** Handle email sending operations
+- **Implementation:**
+  - Generate individual certificates
+  - Create email with certificate attachment
+  - Send via configured SMTP server
+  - Update participant email status
+  - Log email attempts and results
+
+#### 6.3 Email UI Components (2-3 hours)
+
+- **Files:**
+  - `components/email/email-status-indicator.tsx`
+  - `components/email/email-config-dialog.tsx`
+  - `components/email/bulk-email-actions.tsx`
+- **Features:**
+  - Email status display (sent, pending, failed, bounced)
+  - SMTP configuration interface
+  - Bulk email sending with progress tracking
+  - Email retry functionality
+
+#### 6.4 Email Status Tracking (2-3 hours)
+
+- **Database Updates:**
+  - Add email status fields to `IRecipientData`
+  - Create email logs collection
+  - Implement email status tracking
+- **Features:**
+  - Real-time status updates
+  - Email history tracking
+  - Failed email retry mechanisms
+  - Email delivery statistics
+
+### Phase 7: UI Enhancements and Polish (1-2 hours)
+
+#### 7.1 Add Loading States
 
 - **Components to Update:**
   - `participant-row.tsx` - Individual action loading
   - `bulk-actions.tsx` - Bulk action loading
   - `participant-manager-section.tsx` - Overall loading states
 
-#### 6.2 Add Error Handling
+#### 7.2 Add Error Handling
 
 - **Features:**
   - Toast notifications for success/error
   - Error boundaries for action failures
   - Retry mechanisms for failed actions
 
-#### 6.3 Add Confirmation Feedback
+#### 7.3 Add Confirmation Feedback
 
 - **Features:**
   - Success messages for completed actions
@@ -247,8 +300,19 @@ components/participant-manager/
 ├── delete-confirmation-dialog.tsx
 └── action-loading-states.tsx
 
+components/email/
+├── email-status-indicator.tsx
+├── email-config-dialog.tsx
+├── bulk-email-actions.tsx
+└── email-status-dashboard.tsx
+
 lib/
 ├── certificate-utils.ts
+├── email-service.ts
+├── email-config.ts
+├── email-templates/
+│   ├── certificate-email.html
+│   └── certificate-email.txt
 └── participant-actions.ts (optional)
 ```
 
@@ -273,6 +337,10 @@ components/participant-manager/
 - [ ] Individual and bulk participant deletion
 - [ ] Selected participants certificate download
 - [ ] CSV export of selected participants
+- [ ] Individual email sending works
+- [ ] Bulk email sending works
+- [ ] Email status tracking and display
+- [ ] Email configuration management
 - [ ] All actions have proper loading states
 - [ ] All actions have error handling
 - [ ] Confirmation dialogs for destructive actions
@@ -280,7 +348,9 @@ components/participant-manager/
 ### User Experience Requirements
 
 - [ ] Actions complete within 3 seconds (individual)
+- [ ] Email sending completes within 10 seconds (individual)
 - [ ] Bulk actions show progress indicators
+- [ ] Email status updates in real-time
 - [ ] Clear success/error feedback
 - [ ] Intuitive confirmation dialogs
 - [ ] Responsive design maintained
@@ -290,6 +360,8 @@ components/participant-manager/
 - [ ] TypeScript types for all new functions
 - [ ] Proper error boundaries
 - [ ] Memory efficient certificate generation
+- [ ] Secure email sending with proper authentication
+- [ ] Rate limiting for email operations
 - [ ] Accessible UI components
 - [ ] Mobile-friendly interactions
 
@@ -300,9 +372,10 @@ components/participant-manager/
 - **Phase 3:** 2-3 hours (Deletion functionality)
 - **Phase 4:** 2-3 hours (Selected certificates)
 - **Phase 5:** 1-2 hours (CSV export)
-- **Phase 6:** 1-2 hours (UI polish)
+- **Phase 6:** 8-12 hours (Email functionality)
+- **Phase 7:** 1-2 hours (UI polish)
 
-**Total Estimated Time:** 11-17 hours
+**Total Estimated Time:** 19-29 hours
 
 ## Risk Mitigation
 
@@ -312,6 +385,9 @@ components/participant-manager/
 2. **Memory issues with bulk operations** - Add chunking for large datasets
 3. **Concurrent action conflicts** - Add action queuing
 4. **File download issues** - Add fallback mechanisms
+5. **Email delivery failures** - Implement retry mechanisms and error handling
+6. **SMTP configuration complexity** - Provide clear setup documentation
+7. **Rate limiting issues** - Implement proper throttling and user feedback
 
 ### Testing Strategy
 

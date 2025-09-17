@@ -5,6 +5,9 @@ import { Logo } from '../sidebar/logo';
 import { SearchBar } from '../sidebar/search-bar';
 import { EventList } from '../sidebar/event-list';
 import { CreateEventButton } from '../sidebar/create-event-button';
+import { Card, CardContent } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { IView, viewList } from '@/app/page';
 
 interface SidebarProps {
   events: IEvent[];
@@ -18,7 +21,22 @@ interface SidebarProps {
   onSearchChange: (query: string) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  currentView: IView;
+  onViewChange: (view: IView) => void;
 }
+
+const viewIcons = {
+  create: 'M12 6v6m0 0v6m0-6h6m-6 0H6',
+  template:
+    'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z',
+  layout:
+    'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z',
+  recipients:
+    'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+  generate: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+  email:
+    'M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9 2.5 2.5 0 000-5z',
+};
 
 export function Sidebar({
   events,
@@ -32,7 +50,31 @@ export function Sidebar({
   onSearchChange,
   isCollapsed,
   onToggleCollapse,
+  currentView,
+  onViewChange,
 }: SidebarProps) {
+  const getViewStatus = (view: IView) => {
+    if (!selectedEvent) return 'disabled';
+
+    switch (view) {
+      case viewList.create:
+        return 'available';
+      case viewList.template:
+        return 'available';
+      case viewList.layout:
+        return selectedEvent.template.base64 ? 'available' : 'disabled';
+      case viewList.recipients:
+        return selectedEvent.template.base64 ? 'available' : 'disabled';
+      case viewList.email:
+        return selectedEvent.template.base64 &&
+          selectedEvent.participants.length > 0
+          ? 'available'
+          : 'disabled';
+      default:
+        return 'disabled';
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header with Logo and Toggle */}
@@ -86,6 +128,94 @@ export function Sidebar({
           isCollapsed={isCollapsed}
         />
       </div>
+
+      {/* View Navigation */}
+      {!isCollapsed && (
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Navigation
+            </h3>
+            {Object.entries(viewList)
+              .filter(([key]) => key !== viewList.create)
+              .map(([key, label]) => {
+                const status = getViewStatus(label);
+                const isActive = currentView === label;
+                const isDisabled = status === 'disabled';
+
+                return (
+                  <Card
+                    key={key}
+                    className={`cursor-pointer transition-all duration-200 ${
+                      isActive
+                        ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950/20'
+                        : isDisabled
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                    onClick={() => !isDisabled && onViewChange(label)}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-center space-x-3">
+                        <div
+                          className={`p-2 rounded-lg ${
+                            isActive
+                              ? 'bg-blue-100 dark:bg-blue-900'
+                              : isDisabled
+                              ? 'bg-gray-100 dark:bg-gray-700'
+                              : 'bg-gray-100 dark:bg-gray-700'
+                          }`}
+                        >
+                          <svg
+                            className={`w-4 h-4 ${
+                              isActive
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : isDisabled
+                                ? 'text-gray-400'
+                                : 'text-gray-600 dark:text-gray-400'
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d={viewIcons[key as keyof typeof viewIcons]}
+                            />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={`text-sm font-medium truncate capitalize ${
+                              isActive
+                                ? 'text-blue-900 dark:text-blue-100'
+                                : isDisabled
+                                ? 'text-gray-400'
+                                : 'text-gray-900 dark:text-gray-100'
+                            }`}
+                          >
+                            {label}
+                          </p>
+                          {isDisabled && (
+                            <Badge variant="secondary" className="text-xs">
+                              {key === viewList.layout ||
+                              key === viewList.recipients ||
+                              key === viewList.email
+                                ? 'Template required'
+                                : 'Not available'}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+          </div>
+        </div>
+      )}
 
       {/* Create Event Button */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">

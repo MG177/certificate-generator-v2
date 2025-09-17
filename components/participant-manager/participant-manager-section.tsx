@@ -11,6 +11,10 @@ import {
   deleteParticipants,
   generateSelectedCertificates,
   exportParticipantsCSV,
+  sendParticipantEmail,
+  sendBulkEmails,
+  getEmailStatus,
+  retryFailedEmail,
 } from '@/lib/actions';
 import { parseCSV, downloadCSV, generateCSVFilename } from '@/lib/csv-utils';
 import {
@@ -23,10 +27,12 @@ import { CSVActions } from './csv-actions';
 import { ParticipantTable } from './participant-table';
 import { EditParticipantDialog } from './edit-participant-dialog';
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
+import { BulkEmailActions } from '@/components/email';
 import { FileUpload } from '@/components/ui/file-upload';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, AlertCircle, Loader2, Settings } from 'lucide-react';
 
 interface ParticipantManagerSectionProps {
   event: IEvent | null;
@@ -60,6 +66,11 @@ export function ParticipantManagerSection({
   const [isBulkDownloading, setIsBulkDownloading] = useState(false);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [sendingEmails, setSendingEmails] = useState<Set<string>>(new Set());
+  const [isBulkSendingEmails, setIsBulkSendingEmails] = useState(false);
+  const [emailStatuses, setEmailStatuses] = useState<Map<string, any>>(
+    new Map()
+  );
 
   // Initialize participants from event
   useEffect(() => {
@@ -138,8 +149,7 @@ export function ParticipantManagerSection({
         await handleIndividualDownload(participant);
         break;
       case 'send':
-        // Send email to participant - TODO: Implement in future phase
-        console.log('Send email functionality not implemented yet');
+        await handleSendEmail(participant);
         break;
       case 'edit':
         handleEditParticipant(participant);
@@ -351,8 +361,7 @@ export function ParticipantManagerSection({
         handleBulkDownload(participantIds);
         break;
       case 'send':
-        // Send emails to selected participants - TODO: Implement in future phase
-        console.log('Bulk send functionality not implemented yet');
+        handleBulkSendEmails(participantIds);
         break;
       case 'export':
         handleCSVExport(participantIds);
@@ -467,6 +476,240 @@ export function ParticipantManagerSection({
 
     setDeletingParticipants(participantsToDelete);
     setIsDeleteDialogOpen(true);
+  };
+
+  // Email functionality
+  const handleSendEmail = async (participant: IRecipientData) => {
+    if (!event?._id) return;
+
+    const participantId = participant.certification_id;
+
+    // Check if participant has email
+    if (!participant.email) {
+      toast({
+        title: 'Email Required',
+        description:
+          'Please add an email address for this participant before sending.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Add to sending set
+    setSendingEmails((prev) => new Set(prev).add(participantId));
+    setError(null);
+
+    try {
+      const result = await sendParticipantEmail(
+        event._id.toString(),
+        participantId
+      );
+
+      if (result.success) {
+        toast({
+          title: 'Email Sent',
+          description: `Certificate sent to ${participant.name} at ${participant.email}`,
+          variant: 'default',
+        });
+
+        // Update local participant data
+        setParticipants((prev) =>
+          prev.map((p) =>
+            p.certification_id === participantId
+              ? {
+                  ...p,
+                  emailStatus: 'sent',
+                  lastEmailSent: new Date(),
+                  emailError: undefined,
+                }
+              : p
+          )
+        );
+
+        // Refresh event data
+        if (onParticipantsUploaded) {
+          onParticipantsUploaded();
+        }
+      } else {
+        toast({
+          title: 'Email Failed',
+          description: result.error || 'Failed to send email',
+          variant: 'destructive',
+        });
+
+        // Update local participant data with error
+        setParticipants((prev) =>
+          prev.map((p) =>
+            p.certification_id === participantId
+              ? {
+                  ...p,
+                  emailStatus: 'failed',
+                  emailError: result.error,
+                  emailRetryCount: (p.emailRetryCount || 0) + 1,
+                }
+              : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+
+      toast({
+        title: 'Email Failed',
+        description: `Failed to send email: ${errorMessage}`,
+        variant: 'destructive',
+      });
+
+      // Update local participant data with error
+      setParticipants((prev) =>
+        prev.map((p) =>
+          p.certification_id === participantId
+            ? {
+                ...p,
+                emailStatus: 'failed',
+                emailError: errorMessage,
+                emailRetryCount: (p.emailRetryCount || 0) + 1,
+              }
+            : p
+        )
+      );
+    } finally {
+      setSendingEmails((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(participantId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleBulkSendEmails = async (participantIds: string[]) => {
+    if (!event?._id || participantIds.length === 0) {
+      setError('No participants selected for email sending');
+      return;
+    }
+
+    // Filter participants with email addresses
+    const participantsWithEmail = participants.filter(
+      (p) => participantIds.includes(p.certification_id) && p.email
+    );
+
+    if (participantsWithEmail.length === 0) {
+      toast({
+        title: 'No Valid Emails',
+        description: 'Selected participants do not have email addresses.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsBulkSendingEmails(true);
+    setError(null);
+
+    try {
+      const result = await sendBulkEmails(
+        event._id.toString(),
+        participantsWithEmail.map((p) => p.certification_id)
+      );
+
+      if (result.success) {
+        toast({
+          title: 'Bulk Email Sent',
+          description: `Successfully sent ${result.sent} emails. ${result.failed} failed.`,
+          variant: result.failed > 0 ? 'destructive' : 'default',
+        });
+
+        // Refresh event data
+        if (onParticipantsUploaded) {
+          onParticipantsUploaded();
+        }
+      } else {
+        toast({
+          title: 'Bulk Email Failed',
+          description: result.errors.join(', '),
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error sending bulk emails:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+
+      toast({
+        title: 'Bulk Email Failed',
+        description: `Failed to send bulk emails: ${errorMessage}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsBulkSendingEmails(false);
+    }
+  };
+
+  const handleRetryFailedEmail = async (participant: IRecipientData) => {
+    if (!event?._id) return;
+
+    const participantId = participant.certification_id;
+
+    // Add to sending set
+    setSendingEmails((prev) => new Set(prev).add(participantId));
+    setError(null);
+
+    try {
+      const result = await retryFailedEmail(
+        event._id.toString(),
+        participantId
+      );
+
+      if (result.success) {
+        toast({
+          title: 'Email Retried',
+          description: `Certificate resent to ${participant.name} at ${participant.email}`,
+          variant: 'default',
+        });
+
+        // Update local participant data
+        setParticipants((prev) =>
+          prev.map((p) =>
+            p.certification_id === participantId
+              ? {
+                  ...p,
+                  emailStatus: 'sent',
+                  lastEmailSent: new Date(),
+                  emailError: undefined,
+                }
+              : p
+          )
+        );
+
+        // Refresh event data
+        if (onParticipantsUploaded) {
+          onParticipantsUploaded();
+        }
+      } else {
+        toast({
+          title: 'Retry Failed',
+          description: result.error || 'Failed to retry email',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error retrying email:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+
+      toast({
+        title: 'Retry Failed',
+        description: `Failed to retry email: ${errorMessage}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingEmails((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(participantId);
+        return newSet;
+      });
+    }
   };
 
   if (!event) {
@@ -599,16 +842,24 @@ export function ParticipantManagerSection({
             downloadingParticipants={downloadingParticipants}
             isBulkDownloading={isBulkDownloading}
             isExportingCSV={isExportingCSV}
+            sendingEmails={sendingEmails}
+            isBulkSendingEmails={isBulkSendingEmails}
+            onRetryFailedEmail={handleRetryFailedEmail}
+            onBulkSendEmails={handleBulkSendEmails}
+            eventId={event?._id?.toString()}
+            isEmailConfigured={event?.emailConfig?.enabled || false}
           />
 
           {/* Loading Overlay for Bulk Operations */}
-          {(isBulkDownloading || isExportingCSV) && (
+          {(isBulkDownloading || isExportingCSV || isBulkSendingEmails) && (
             <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
               <div className="flex items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border">
                 <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
                 <span className="text-gray-700 dark:text-gray-300 font-medium">
                   {isBulkDownloading
                     ? 'Generating certificates...'
+                    : isBulkSendingEmails
+                    ? 'Sending emails...'
                     : 'Exporting CSV...'}
                 </span>
               </div>
@@ -654,6 +905,18 @@ export function ParticipantManagerSection({
         onConfirm={handleConfirmDelete}
         isLoading={isDeletingParticipant}
       />
+
+      {/* Email Dashboard Toggle */}
+      {/* {participants.length > 0 && !showUpload && (
+        <div className="mt-4 flex justify-center">
+          <Button
+            variant="outline"
+            onClick={() => setShowEmailDashboard(!showEmailDashboard)}
+          >
+            {showEmailDashboard ? 'Hide' : 'Show'} Email Dashboard
+          </Button>
+        </div>
+      )} */}
     </div>
   );
 }

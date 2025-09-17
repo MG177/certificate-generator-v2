@@ -16,6 +16,13 @@ export interface IEvent {
   nameConfig: ITextConfig;
   idConfig: ITextConfig;
   participants: IRecipientData[];
+  emailConfig?: IEmailConfig;
+  emailTemplate?: IEmailTemplate;
+  emailSettings?: {
+    enabled: boolean;
+    requireEmail: boolean;
+    autoSend: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +53,9 @@ export interface IRecipientData {
   certification_id: string;
   email?: string;
   lastEmailSent?: Date;
+  emailStatus?: EmailStatus;
+  emailError?: string;
+  emailRetryCount?: number;
 }
 
 export interface IProjectConfig {
@@ -106,3 +116,42 @@ export type IParticipantAction =
   | 'edit'
   | 'delete'
   | 'export';
+
+// Email-related interfaces
+export interface IEmailConfig {
+  smtpHost: string;
+  smtpPort: number;
+  smtpSecure: boolean;
+  smtpUser: string;
+  smtpPass: string;
+  fromName: string;
+  fromAddress: string;
+  subjectTemplate: string;
+  enabled: boolean;
+}
+
+export interface IEmailLog {
+  _id?: ObjectId;
+  participantId: string;
+  eventId: ObjectId;
+  emailAddress: string;
+  status: 'pending' | 'sent' | 'failed' | 'bounced';
+  sentAt?: Date;
+  errorMessage?: string;
+  retryCount: number;
+  lastRetryAt?: Date;
+  createdAt: Date;
+}
+
+export type EmailStatus =
+  | 'not_sent'
+  | 'pending'
+  | 'sent'
+  | 'failed'
+  | 'bounced';
+
+export interface IEmailTemplate {
+  subject: string;
+  html: string;
+  text: string;
+}

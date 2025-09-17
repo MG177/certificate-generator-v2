@@ -25,6 +25,12 @@ interface ParticipantTableProps {
   downloadingParticipants?: Set<string>;
   isBulkDownloading?: boolean;
   isExportingCSV?: boolean;
+  sendingEmails?: Set<string>;
+  isBulkSendingEmails?: boolean;
+  onRetryFailedEmail?: (participant: IRecipientData) => void;
+  onBulkSendEmails?: (participantIds: string[]) => void;
+  eventId?: string;
+  isEmailConfigured?: boolean;
 }
 
 export function ParticipantTable({
@@ -35,6 +41,12 @@ export function ParticipantTable({
   downloadingParticipants = new Set(),
   isBulkDownloading = false,
   isExportingCSV = false,
+  sendingEmails = new Set(),
+  isBulkSendingEmails = false,
+  onRetryFailedEmail,
+  onBulkSendEmails,
+  eventId,
+  isEmailConfigured = false,
 }: ParticipantTableProps) {
   const [selectedParticipants, setSelectedParticipants] = useState<Set<number>>(
     new Set()
@@ -69,6 +81,10 @@ export function ParticipantTable({
     );
     onBulkAction(action, selectedParticipantIds);
   };
+
+  const selectedParticipantIds = Array.from(selectedParticipants).map(
+    (index) => participants[index].certification_id
+  );
 
   const handleParticipantAction = (
     action: IParticipantAction,
@@ -116,6 +132,12 @@ export function ParticipantTable({
         disabled={disabled}
         isDownloading={isBulkDownloading}
         isExporting={isExportingCSV}
+        isSendingEmails={isBulkSendingEmails}
+        onBulkSendEmails={onBulkSendEmails}
+        eventId={eventId}
+        participants={participants}
+        selectedParticipantIds={selectedParticipantIds}
+        isEmailConfigured={isEmailConfigured}
       />
 
       {/* Table */}
@@ -164,6 +186,9 @@ export function ParticipantTable({
                 isDownloading={downloadingParticipants.has(
                   participant.certification_id
                 )}
+                isSendingEmail={sendingEmails.has(participant.certification_id)}
+                onRetryFailedEmail={onRetryFailedEmail}
+                isEmailConfigured={isEmailConfigured}
               />
             ))}
           </TableBody>

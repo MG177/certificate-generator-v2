@@ -90,8 +90,9 @@ export function EventList({
             ready: 0,
             'no-template': 1,
             'no-participants': 2,
-            archived: 3,
-            // deleted: 4,
+            'no-email-config': 3,
+            archived: 4,
+            // deleted: 5,
           };
           const aStatus =
             // a.isDeleted
@@ -102,6 +103,8 @@ export function EventList({
               ? 'no-template'
               : a.participants.length === 0
               ? 'no-participants'
+              : !a.emailConfig || !a.emailConfig.enabled
+              ? 'no-email-config'
               : 'ready';
           const bStatus =
             // b.isDeleted
@@ -112,6 +115,8 @@ export function EventList({
               ? 'no-template'
               : b.participants.length === 0
               ? 'no-participants'
+              : !b.emailConfig || !b.emailConfig.enabled
+              ? 'no-email-config'
               : 'ready';
           return (statusOrder[aStatus] || 5) - (statusOrder[bStatus] || 5);
         default:
