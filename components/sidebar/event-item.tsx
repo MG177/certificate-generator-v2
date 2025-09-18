@@ -45,7 +45,7 @@ import {
 import { useState, useEffect } from 'react';
 import { updateEvent } from '@/lib/actions';
 import { toast } from '@/hooks/use-toast';
-import { EmailConfigDialog } from '../email/email-config-dialog';
+// import { EmailConfigDialog } from '../email/email-config-dialog';
 
 interface EventItemProps {
   event: IEvent;
@@ -464,7 +464,7 @@ export function EventItem({
         </div>
 
         {/* Email Configuration Dialog */}
-        {event && (
+        {/* {event && (
           <div className="mt-2">
             <EmailConfigDialog
               eventId={event._id!.toString()}
@@ -478,7 +478,7 @@ export function EventItem({
               </Button>
             </EmailConfigDialog>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Delete Confirmation Dialog */}

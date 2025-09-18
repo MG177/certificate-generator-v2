@@ -162,6 +162,7 @@ export const viewList: { [key: string]: string } = {
   layout: 'layout',
   recipients: 'email distribution',
   email: 'email status',
+  emailConfig: 'email settings',
   // generate: 'generate',
 };
 

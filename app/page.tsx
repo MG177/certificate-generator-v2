@@ -6,7 +6,7 @@ import { EventCreationTab } from '@/components/event-creation-tab';
 import { TemplateUploadSection } from '@/components/template-upload-section';
 import { TemplateAdjustmentSection } from '@/components/template-adjustment/template-adjustment-section';
 import { ParticipantManagerSection } from '@/components/participant-manager/participant-manager-section';
-import { EmailStatusDashboard } from '@/components/email';
+import { EmailStatusDashboard, EmailConfigView } from '@/components/email';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { IEvent } from '@/lib/types';
 import { getAllEvents } from '@/lib/actions';
@@ -227,6 +227,14 @@ export default function Home() {
           eventId={selectedEvent._id!.toString()}
           participants={selectedEvent.participants}
           onEmailRetry={handleParticipantsUploaded}
+        />
+      )}
+
+      {currentView === viewList.emailConfig && selectedEvent && (
+        <EmailConfigView
+          event={selectedEvent}
+          onBack={() => navigateView(viewList.recipients)}
+          onConfigUpdate={() => loadEvents()}
         />
       )}
 
