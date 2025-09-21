@@ -97,7 +97,9 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0"
   },
-  "resolutions": {
-    "jest-environment-jsdom/canvas": "^3.2.0"
+  "overrides": {
+    "jest-environment-jsdom": {
+      "canvas": "^3.2.0"
+    }
   }
 }
