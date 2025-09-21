@@ -34,7 +34,7 @@ export function ResponsiveLayout({
 }: ResponsiveLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const environment = process.env.ENVIRONMENT;
+  const environment = process.env.NEXT_PUBLIC_ENVIRONMENT;
 
   const filteredEvents = events.filter(
     (event) =>
@@ -83,7 +83,7 @@ export function ResponsiveLayout({
         {/* Database Health Check */}
         <div
           className="absolute bottom-2 right-2"
-          hidden={environment == 'development'}
+          hidden={environment && environment == 'Development' ? false : true}
         >
           <DatabaseHealthCheck />
         </div>
