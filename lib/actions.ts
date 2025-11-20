@@ -167,14 +167,20 @@ export async function deleteEvent(eventId: string): Promise<boolean> {
   }
 }
 
-export async function getEvent(eventId: string): Promise<IEvent | null> {
+export async function getEvent(
+  eventId: string,
+  projection?: Record<string, 0 | 1>
+): Promise<IEvent | null> {
   try {
     const db = await getDatabase();
     const eventsCollection = db.collection('events');
 
-    const event = await eventsCollection.findOne({
-      _id: new ObjectId(eventId),
-    });
+    const options = projection ? { projection } : {};
+    const event = await eventsCollection.findOne(
+      { _id: new ObjectId(eventId) },
+      options
+    );
+    
     return event ? serializeEvent(event) : null;
   } catch (error) {
     console.error('Error getting event:', error);
@@ -183,6 +189,31 @@ export async function getEvent(eventId: string): Promise<IEvent | null> {
 }
 
 export async function getAllEvents(
+  includeDeleted: boolean = false,
+  projection?: Record<string, 0 | 1>
+): Promise<IEvent[]> {
+  try {
+    const db = await getDatabase();
+    const eventsCollection = db.collection('events');
+
+    const filter = includeDeleted ? {} : { isDeleted: { $ne: true } };
+    const query = eventsCollection.find(filter).sort({ createdAt: -1 });
+    
+    if (projection) {
+      query.project(projection);
+    }
+    
+    const events = await query.toArray();
+
+    return events.map(serializeEvent);
+  } catch (error) {
+    console.error('Error getting all events:', error);
+    throw new Error('Failed to get events');
+  }
+}
+
+// Optimized function to get event summaries without large base64 data
+export async function getAllEventsSummary(
   includeDeleted: boolean = false
 ): Promise<IEvent[]> {
   try {
@@ -192,13 +223,25 @@ export async function getAllEvents(
     const filter = includeDeleted ? {} : { isDeleted: { $ne: true } };
     const events = await eventsCollection
       .find(filter)
+      .project({
+        // Exclude only the large fields we don't need
+        'template.base64': 0,
+        participants: 0,
+      })
       .sort({ createdAt: -1 })
       .toArray();
 
-    return events.map(serializeEvent);
+    return events.map((event) => ({
+      ...serializeEvent(event),
+      template: {
+        ...event.template,
+        base64: '', // Empty string to maintain type compatibility
+      },
+      participants: [], // Empty array to maintain type compatibility
+    }));
   } catch (error) {
-    console.error('Error getting all events:', error);
-    throw new Error('Failed to get events');
+    console.error('Error getting event summaries:', error);
+    throw new Error('Failed to get event summaries');
   }
 }
 

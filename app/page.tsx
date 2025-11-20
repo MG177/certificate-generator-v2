@@ -1,21 +1,84 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { ResponsiveLayout } from '@/components/layout/responsive-layout';
-import { EventCreationTab } from '@/components/event-creation-tab';
-import { TemplateUploadSection } from '@/components/template-upload-section';
-import { TemplateAdjustmentSection } from '@/components/template-adjustment/template-adjustment-section';
-import { ParticipantManagerSection } from '@/components/participant-manager/participant-manager-section';
-import { EmailStatusDashboard, EmailConfigView } from '@/components/email';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { IEvent } from '@/lib/types';
-import { getAllEvents } from '@/lib/actions';
+import { getAllEventsSummary, getEvent } from '@/lib/actions';
 import {
   saveAppState,
   loadAppState,
   findEventById,
 } from '@/lib/local-storage-utils';
 import { IView, viewList } from '@/lib/types';
+
+// Lazy load components for code splitting
+const EventCreationTab = dynamic(
+  () => import('@/components/event-creation-tab').then((mod) => ({ default: mod.EventCreationTab })),
+  { 
+    loading: () => (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+);
+
+const TemplateUploadSection = dynamic(
+  () => import('@/components/template-upload-section').then((mod) => ({ default: mod.TemplateUploadSection })),
+  { 
+    loading: () => (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+);
+
+const TemplateAdjustmentSection = dynamic(
+  () => import('@/components/template-adjustment/template-adjustment-section').then((mod) => ({ default: mod.TemplateAdjustmentSection })),
+  { 
+    loading: () => (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+);
+
+const ParticipantManagerSection = dynamic(
+  () => import('@/components/participant-manager/participant-manager-section').then((mod) => ({ default: mod.ParticipantManagerSection })),
+  { 
+    loading: () => (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+);
+
+const EmailStatusDashboard = dynamic(
+  () => import('@/components/email').then((mod) => ({ default: mod.EmailStatusDashboard })),
+  { 
+    loading: () => (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+);
+
+const EmailConfigView = dynamic(
+  () => import('@/components/email').then((mod) => ({ default: mod.EmailConfigView })),
+  { 
+    loading: () => (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+);
 
 export default function Home() {
   const [events, setEvents] = useState<IEvent[]>([]);
@@ -24,15 +87,42 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load full event data when selected event changes
+  useEffect(() => {
+    const loadFullEventData = async () => {
+      if (!selectedEvent?._id) return;
+      
+      // Check if we already have full data (has base64 or participants)
+      if (selectedEvent.template.base64 || selectedEvent.participants.length > 0) {
+        return; // Already have full data
+      }
+
+      try {
+        const fullEvent = await getEvent(selectedEvent._id.toString());
+        if (fullEvent) {
+          setSelectedEvent(fullEvent);
+          // Update in events list too
+          setEvents((prev) =>
+            prev.map((e) => (e._id === fullEvent._id ? fullEvent : e))
+          );
+        }
+      } catch (err) {
+        console.error('Error loading full event data:', err);
+      }
+    };
+
+    loadFullEventData();
+  }, [selectedEvent?._id]);
+
   // Load events and restore state on component mount
   useEffect(() => {
     const initializeApp = async () => {
       try {
         setLoading(true);
 
-        // Load events first
-        const allEvents = await getAllEvents();
-        setEvents(allEvents);
+        // Load event summaries (without base64 and participants) for faster initial load
+        const eventSummaries = await getAllEventsSummary();
+        setEvents(eventSummaries);
 
         // Try to restore previous state
         const savedState = loadAppState();
@@ -44,9 +134,22 @@ export default function Home() {
 
           // Restore selected event if it still exists
           if (savedState.selectedEventId) {
-            const event = findEventById(allEvents, savedState.selectedEventId);
+            const event = findEventById(eventSummaries, savedState.selectedEventId);
             if (event) {
               setSelectedEvent(event);
+              // Load full event data in background
+              getEvent(savedState.selectedEventId)
+                .then((fullEvent) => {
+                  if (fullEvent) {
+                    setSelectedEvent(fullEvent);
+                    setEvents((prev) =>
+                      prev.map((e) => (e._id === fullEvent._id ? fullEvent : e))
+                    );
+                  }
+                })
+                .catch((err) => {
+                  console.error('Error loading full event data:', err);
+                });
             }
           }
         }
@@ -64,8 +167,20 @@ export default function Home() {
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const allEvents = await getAllEvents();
-      setEvents(allEvents);
+      // Use summary for faster refresh
+      const eventSummaries = await getAllEventsSummary();
+      setEvents(eventSummaries);
+      
+      // If we have a selected event, refresh its full data
+      if (selectedEvent?._id) {
+        const fullEvent = await getEvent(selectedEvent._id.toString());
+        if (fullEvent) {
+          setSelectedEvent(fullEvent);
+          setEvents((prev) =>
+            prev.map((e) => (e._id === fullEvent._id ? fullEvent : e))
+          );
+        }
+      }
     } catch (err) {
       console.error('Error loading events:', err);
       setError('Failed to load events');
@@ -90,13 +205,36 @@ export default function Home() {
     navigateView(viewList.template);
   };
 
-  const handleEventSelected = (event: IEvent) => {
+  const handleEventSelected = async (event: IEvent) => {
     setSelectedEvent(event);
     // Persist selected event
     saveAppState({
       currentView: currentView as string,
       selectedEventId: event._id?.toString() || null,
     });
+    
+    // Load full event data if we only have summary
+    if (!event.template.base64 && event._id) {
+      try {
+        const fullEvent = await getEvent(event._id.toString());
+        if (fullEvent) {
+          setSelectedEvent(fullEvent);
+          setEvents((prev) =>
+            prev.map((e) => (e._id === fullEvent._id ? fullEvent : e))
+          );
+          // Use full event for navigation check
+          if (fullEvent.template.base64) {
+            navigateView(viewList.template);
+          } else {
+            navigateView(viewList.template);
+          }
+          return;
+        }
+      } catch (err) {
+        console.error('Error loading full event data:', err);
+      }
+    }
+    
     // If event has template, go to layout section, otherwise go to template upload
     if (event.template.base64) {
       navigateView(viewList.template);
