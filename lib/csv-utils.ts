@@ -1,7 +1,67 @@
 import { IRecipientData } from './types';
 
+/**
+ * Parses a CSV line handling quoted fields properly
+ * Supports fields with commas inside quotes and escaped quotes
+ */
+function parseCSVLine(line: string): string[] {
+  const values: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < line.length) {
+    const char = line[i];
+    const nextChar = i + 1 < line.length ? line[i + 1] : null;
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote inside quoted field (double quote)
+        current += '"';
+        i += 2;
+      } else if (inQuotes && (nextChar === ',' || nextChar === null || nextChar === '\r')) {
+        // End of quoted field (followed by comma, end of line, or carriage return)
+        inQuotes = false;
+        if (nextChar === ',') {
+          // Save current field and start new one
+          values.push(current);
+          current = '';
+          i += 2; // Skip quote and comma
+        } else {
+          // End of line, just skip the quote
+          i++;
+        }
+      } else if (!inQuotes) {
+        // Start of quoted field
+        inQuotes = true;
+        i++;
+      } else {
+        // Standalone quote at end (shouldn't happen in well-formed CSV, but handle it)
+        inQuotes = false;
+        i++;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // Field separator (only when not inside quotes)
+      values.push(current);
+      current = '';
+      i++;
+    } else {
+      current += char;
+      i++;
+    }
+  }
+
+  // Add the last field
+  values.push(current);
+
+  // Trim all values
+  return values.map(v => v.trim());
+}
+
 export function parseCSV(csvContent: string): IRecipientData[] {
-  const lines = csvContent.trim().split('\n');
+  // Normalize line endings (handle both \r\n and \n)
+  const normalized = csvContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = normalized.trim().split('\n');
 
   if (lines.length < 2) {
     throw new Error(
@@ -9,7 +69,7 @@ export function parseCSV(csvContent: string): IRecipientData[] {
     );
   }
 
-  const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
+  const headers = parseCSVLine(lines[0]).map((h) => h.trim().toLowerCase());
 
   // Validate headers
   if (
@@ -30,17 +90,24 @@ export function parseCSV(csvContent: string): IRecipientData[] {
   const seenCertIds = new Set<string>();
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map((v) => v.trim());
+    const line = lines[i].trim();
+    
+    // Skip empty lines
+    if (!line) {
+      continue;
+    }
 
-    if (values.length < Math.max(nameIndex + 1, certIdIndex + 1)) {
+    const values = parseCSVLine(line);
+
+    if (values.length < Math.max(nameIndex + 1, certIdIndex + 1, emailIndex + 1)) {
       console.warn(`Skipping row ${i + 1}: insufficient columns`);
       continue;
     }
 
-    const name = values[nameIndex];
-    const certification_id = values[certIdIndex];
-    const email = values[emailIndex];
-    console.log(name, certification_id, email);
+    // Values are already cleaned by parseCSVLine
+    const name = values[nameIndex]?.trim();
+    const certification_id = values[certIdIndex]?.trim();
+    const email = values[emailIndex]?.trim();
 
     if (!name || !certification_id) {
       console.warn(`Skipping row ${i + 1}: missing required data`);
