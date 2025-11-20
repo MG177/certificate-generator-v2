@@ -1,15 +1,96 @@
 import { IRecipientData } from './types';
 
-export function parseCSV(csvContent: string): IRecipientData[] {
-  const lines = csvContent.trim().split('\n');
+/**
+ * Properly parses a CSV row handling quoted fields, escaped quotes, and newlines within quotes
+ */
+function parseCSVRow(row: string): string[] {
+  const fields: string[] = [];
+  let currentField = '';
+  let inQuotes = false;
+  let i = 0;
 
-  if (lines.length < 2) {
+  while (i < row.length) {
+    const char = row[i];
+    const nextChar = row[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote (double quote)
+        currentField += '"';
+        i += 2;
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+        i++;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // Field separator (only outside quotes)
+      fields.push(currentField.trim());
+      currentField = '';
+      i++;
+    } else {
+      currentField += char;
+      i++;
+    }
+  }
+
+  // Add the last field
+  fields.push(currentField.trim());
+
+  return fields;
+}
+
+/**
+ * Splits CSV content into rows, handling newlines within quoted fields
+ */
+function splitCSVRows(csvContent: string): string[] {
+  const rows: string[] = [];
+  let currentRow = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < csvContent.length; i++) {
+    const char = csvContent[i];
+    const nextChar = csvContent[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote
+        currentRow += '"';
+        i++; // Skip next quote
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+      }
+      currentRow += char;
+    } else if (char === '\n' && !inQuotes) {
+      // Newline outside quotes = row separator
+      if (currentRow.trim()) {
+        rows.push(currentRow);
+      }
+      currentRow = '';
+    } else {
+      currentRow += char;
+    }
+  }
+
+  // Add the last row if not empty
+  if (currentRow.trim()) {
+    rows.push(currentRow);
+  }
+
+  return rows;
+}
+
+export function parseCSV(csvContent: string): IRecipientData[] {
+  const rows = splitCSVRows(csvContent.trim());
+
+  if (rows.length < 2) {
     throw new Error(
       'CSV file must contain at least a header row and one data row'
     );
   }
 
-  const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
+  const headers = parseCSVRow(rows[0]).map((h) => h.trim().toLowerCase());
 
   // Validate headers
   if (
@@ -29,18 +110,18 @@ export function parseCSV(csvContent: string): IRecipientData[] {
   const recipients: IRecipientData[] = [];
   const seenCertIds = new Set<string>();
 
-  for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map((v) => v.trim());
+  for (let i = 1; i < rows.length; i++) {
+    const values = parseCSVRow(rows[i]);
 
-    if (values.length < Math.max(nameIndex + 1, certIdIndex + 1)) {
+    if (values.length < Math.max(nameIndex + 1, certIdIndex + 1, emailIndex + 1)) {
       console.warn(`Skipping row ${i + 1}: insufficient columns`);
       continue;
     }
 
-    const name = values[nameIndex];
-    const certification_id = values[certIdIndex];
-    const email = values[emailIndex];
-    console.log(name, certification_id, email);
+    // Remove surrounding quotes if present
+    const name = values[nameIndex]?.replace(/^"|"$/g, '').trim() || '';
+    const certification_id = values[certIdIndex]?.replace(/^"|"$/g, '').trim() || '';
+    const email = values[emailIndex]?.replace(/^"|"$/g, '').trim() || '';
 
     if (!name || !certification_id) {
       console.warn(`Skipping row ${i + 1}: missing required data`);
