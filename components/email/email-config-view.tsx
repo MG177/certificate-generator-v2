@@ -571,7 +571,7 @@ export function EmailConfigView({
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
+              {/* <div className="flex items-center space-x-2">
                 <Switch
                   id="smtpSecure"
                   checked={config.smtpSecure}
@@ -580,7 +580,7 @@ export function EmailConfigView({
                   }
                 />
                 <Label htmlFor="smtpSecure">Use SSL/TLS</Label>
-              </div>
+              </div> */}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -588,6 +588,7 @@ export function EmailConfigView({
                   <Input
                     id="smtpUser"
                     value={config.smtpUser}
+                    required
                     onChange={(e) =>
                       handleConfigChange('smtpUser', e.target.value)
                     }
@@ -600,6 +601,7 @@ export function EmailConfigView({
                     id="smtpPass"
                     type="password"
                     value={config.smtpPass}
+                    required
                     onChange={(e) =>
                       handleConfigChange('smtpPass', e.target.value)
                     }
@@ -618,6 +620,7 @@ export function EmailConfigView({
                       handleConfigChange('fromName', e.target.value)
                     }
                     placeholder="Certificate Generator"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -629,6 +632,7 @@ export function EmailConfigView({
                     onChange={(e) =>
                       handleConfigChange('fromAddress', e.target.value)
                     }
+                    required
                     placeholder="noreply@yourdomain.com"
                   />
                 </div>

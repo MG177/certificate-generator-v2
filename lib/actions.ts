@@ -1138,7 +1138,7 @@ export async function retryFailedEmail(
       return { success: false, error: 'Participant not found' };
     }
 
-    if (participant.emailStatus !== 'failed') {
+    if (participant.emailStatus && participant.emailStatus !== 'failed') {
       return { success: false, error: 'Email is not in failed state' };
     }
 
