@@ -75,12 +75,12 @@ export const DEFAULT_EMAIL_TEMPLATE: IEmailTemplate = {
       <div class="header">
         <h1>Certificate of Completion</h1>
       </div>
-      
+
       <div class="content">
         <p>Dear {participantName},</p>
-        
+
         <p>Congratulations! You have successfully completed the event <strong>{eventTitle}</strong>.</p>
-        
+
         <div class="certificate-info">
           <h3>Certificate Details</h3>
           <p><strong>Participant:</strong> {participantName}</p>
@@ -88,15 +88,15 @@ export const DEFAULT_EMAIL_TEMPLATE: IEmailTemplate = {
           <p><strong>Certificate ID:</strong> {certificateId}</p>
           <p><strong>Date:</strong> {eventDate}</p>
         </div>
-        
+
         <p>Your certificate is attached to this email. Please keep it safe as proof of your completion.</p>
-        
+
         <p>If you have any questions, please don't hesitate to contact us.</p>
-        
+
         <p>Best regards,<br>
         Certificate Generator Team</p>
       </div>
-      
+
       <div class="footer">
         <p>This is an automated message. Please do not reply to this email.</p>
       </div>
@@ -105,24 +105,24 @@ export const DEFAULT_EMAIL_TEMPLATE: IEmailTemplate = {
   `,
   text: `
     Certificate of Completion
-    
+
     Dear {participantName},
-    
+
     Congratulations! You have successfully completed the event "{eventTitle}".
-    
+
     Certificate Details:
     - Participant: {participantName}
     - Event: {eventTitle}
     - Certificate ID: {certificateId}
     - Date: {eventDate}
-    
+
     Your certificate is attached to this email. Please keep it safe as proof of your completion.
-    
+
     If you have any questions, please don't hesitate to contact us.
-    
+
     Best regards,
     Certificate Generator Team
-    
+
     ---
     This is an automated message. Please do not reply to this email.
   `,

@@ -21,7 +21,7 @@ export function MainContent({
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-full mx-auto space-y-8">{children}</div>
+        <div className="w-full space-y-8">{children}</div>
       </div>
     </div>
   );

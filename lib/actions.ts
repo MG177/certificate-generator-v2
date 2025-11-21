@@ -180,7 +180,7 @@ export async function getEvent(
       { _id: new ObjectId(eventId) },
       options
     );
-    
+
     return event ? serializeEvent(event) : null;
   } catch (error) {
     console.error('Error getting event:', error);
@@ -198,11 +198,11 @@ export async function getAllEvents(
 
     const filter = includeDeleted ? {} : { isDeleted: { $ne: true } };
     const query = eventsCollection.find(filter).sort({ createdAt: -1 });
-    
+
     if (projection) {
       query.project(projection);
     }
-    
+
     const events = await query.toArray();
 
     return events.map(serializeEvent);

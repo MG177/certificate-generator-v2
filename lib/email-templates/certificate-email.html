@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Your Certificate</title>
     <style>
-      body {
+      .email-template-wrapper {
         font-family: Arial, sans-serif;
         line-height: 1.6;
         color: #333;
@@ -14,75 +14,75 @@
         padding: 20px;
         background-color: #f8f9fa;
       }
-      .container {
+      .email-template-wrapper .container {
         background-color: white;
         border-radius: 8px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         overflow: hidden;
       }
-      .header {
+      .email-template-wrapper .header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         padding: 30px 20px;
         text-align: center;
       }
-      .header h1 {
+      .email-template-wrapper .header h1 {
         margin: 0;
         font-size: 28px;
         font-weight: 300;
       }
-      .content {
+      .email-template-wrapper .content {
         padding: 30px;
       }
-      .greeting {
+      .email-template-wrapper .greeting {
         font-size: 18px;
         margin-bottom: 20px;
       }
-      .certificate-info {
+      .email-template-wrapper .certificate-info {
         background-color: #f8f9fa;
         border-left: 4px solid #667eea;
         padding: 20px;
         margin: 25px 0;
         border-radius: 0 8px 8px 0;
       }
-      .certificate-info h3 {
+      .email-template-wrapper .certificate-info h3 {
         margin-top: 0;
         color: #667eea;
         font-size: 20px;
       }
-      .info-row {
+      .email-template-wrapper .info-row {
         display: flex;
         justify-content: space-between;
         margin: 10px 0;
         padding: 8px 0;
         border-bottom: 1px solid #e9ecef;
       }
-      .info-row:last-child {
+      .email-template-wrapper .info-row:last-child {
         border-bottom: none;
       }
-      .info-label {
+      .email-template-wrapper .info-label {
         font-weight: 600;
         color: #495057;
       }
-      .info-value {
+      .email-template-wrapper .info-value {
         color: #212529;
       }
-      .message {
+      .email-template-wrapper .message {
         margin: 25px 0;
         font-size: 16px;
       }
-      .footer {
+      .email-template-wrapper .footer {
         background-color: #f8f9fa;
         padding: 20px 30px;
         text-align: center;
         border-top: 1px solid #dee2e6;
       }
-      .footer p {
+      .email-template-wrapper .footer p {
         margin: 5px 0;
         font-size: 14px;
         color: #6c757d;
       }
-      .attachment-notice {
+      .email-template-wrapper .attachment-notice {
         background-color: #d1ecf1;
         border: 1px solid #bee5eb;
         color: #0c5460;
@@ -90,88 +90,92 @@
         border-radius: 5px;
         margin: 20px 0;
       }
-      .attachment-notice strong {
+      .email-template-wrapper .attachment-notice strong {
         display: block;
         margin-bottom: 5px;
       }
-      @media (max-width: 600px) {
-        body {
+      /* @media (max-width: 600px) {
+        .email-template-wrapper {
           padding: 10px;
         }
-        .content {
+        .email-template-wrapper .content {
           padding: 20px;
         }
-        .info-row {
+        .email-template-wrapper .info-row {
           flex-direction: column;
         }
-        .info-label {
+        .email-template-wrapper .info-label {
           margin-bottom: 5px;
         }
-      }
+      } */
     </style>
   </head>
   <body>
-    <div class="container">
-      <div class="header">
-        <h1>🎓 Certificate of Completion</h1>
-      </div>
+    <div class="email-template-wrapper">
+      <div class="container">
+        <div class="header">
+          <h1>🎓 Certificate of Completion</h1>
+        </div>
 
-      <div class="content">
-        <div class="greeting">Dear <strong>{participantName}</strong>,</div>
+        <div class="content">
+          <div class="greeting">Dear <strong>{participantName}</strong>,</div>
 
-        <div class="message">
+          <div class="message">
+            <p>
+              Congratulations! You have successfully completed the event and
+              earned your certificate.
+            </p>
+          </div>
+
+          <div class="certificate-info">
+            <h3>📋 Certificate Details</h3>
+            <div class="info-row">
+              <span class="info-label">Participant Name:</span>
+              <span class="info-value">{participantName}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Event Title:</span>
+              <span class="info-value">{eventTitle}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Certificate ID:</span>
+              <span class="info-value">{certificateId}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Completion Date:</span>
+              <span class="info-value">{eventDate}</span>
+            </div>
+          </div>
+
+          <div class="attachment-notice">
+            <strong>📎 Certificate Attachment</strong>
+            Your official certificate is attached to this email as a PNG file.
+            Please download and save it for your records.
+          </div>
+
+          <div class="message">
+            <p>
+              This certificate serves as official proof of your participation
+              and completion. We recommend keeping it in a safe place for future
+              reference.
+            </p>
+
+            <p>
+              If you have any questions about this certificate or need
+              assistance, please don't hesitate to contact us.
+            </p>
+
+            <p>Congratulations once again on your achievement!</p>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p><strong>Certificate Generator</strong></p>
           <p>
-            Congratulations! You have successfully completed the event and
-            earned your certificate.
+            This is an automated message. Please do not reply to this email.
           </p>
+          <p>Generated on {currentDate}</p>
         </div>
-
-        <div class="certificate-info">
-          <h3>📋 Certificate Details</h3>
-          <div class="info-row">
-            <span class="info-label">Participant Name:</span>
-            <span class="info-value">{participantName}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Event Title:</span>
-            <span class="info-value">{eventTitle}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Certificate ID:</span>
-            <span class="info-value">{certificateId}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Completion Date:</span>
-            <span class="info-value">{eventDate}</span>
-          </div>
-        </div>
-
-        <div class="attachment-notice">
-          <strong>📎 Certificate Attachment</strong>
-          Your official certificate is attached to this email as a PNG file.
-          Please download and save it for your records.
-        </div>
-
-        <div class="message">
-          <p>
-            This certificate serves as official proof of your participation and
-            completion. We recommend keeping it in a safe place for future
-            reference.
-          </p>
-
-          <p>
-            If you have any questions about this certificate or need assistance,
-            please don't hesitate to contact us.
-          </p>
-
-          <p>Congratulations once again on your achievement!</p>
-        </div>
-      </div>
-
-      <div class="footer">
-        <p><strong>Certificate Generator</strong></p>
-        <p>This is an automated message. Please do not reply to this email.</p>
-        <p>Generated on {currentDate}</p>
       </div>
     </div>
   </body>

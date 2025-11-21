@@ -1,0 +1,118 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - generic [ref=e9]: L
+          - generic [ref=e10]:
+            - generic [ref=e11]: LumenDev
+            - generic [ref=e12]: Certificate Generator
+        - button "Collapse sidebar" [ref=e13] [cursor=pointer]:
+          - img [ref=e14] [cursor=pointer]
+      - generic [ref=e17]:
+        - img [ref=e18]
+        - textbox "Search for events" [ref=e21]
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - heading "Events (2)" [level=3] [ref=e25]
+          - generic [ref=e26]:
+            - combobox [ref=e27] [cursor=pointer]:
+              - generic: Active
+              - img [ref=e28] [cursor=pointer]
+            - combobox [ref=e30] [cursor=pointer]:
+              - generic: Date ↓
+              - img [ref=e31] [cursor=pointer]
+        - generic [ref=e33]:
+          - generic [ref=e35]:
+            - generic [ref=e36]:
+              - generic [ref=e37]:
+                - heading "gfdsd" [level=4] [ref=e38]
+                - generic [ref=e39]: No Template
+              - generic [ref=e40]:
+                - generic [ref=e41]:
+                  - img [ref=e42]
+                  - text: Sep 17, 2025
+                - generic [ref=e44]:
+                  - img [ref=e45]
+                  - text: "0"
+                - generic [ref=e50]:
+                  - img [ref=e51]
+                  - text: No Template
+            - button [ref=e55] [cursor=pointer]:
+              - img [ref=e56] [cursor=pointer]
+          - generic [ref=e61]:
+            - generic [ref=e62]:
+              - generic [ref=e63]:
+                - heading "asdasd" [level=4] [ref=e64]
+                - generic [ref=e65]: No Template
+              - paragraph [ref=e66]: asdasd
+              - generic [ref=e67]:
+                - generic [ref=e68]:
+                  - img [ref=e69]
+                  - text: Sep 17, 2025
+                - generic [ref=e71]:
+                  - img [ref=e72]
+                  - text: "0"
+                - generic [ref=e77]:
+                  - img [ref=e78]
+                  - text: No Template
+            - button [ref=e82] [cursor=pointer]:
+              - img [ref=e83] [cursor=pointer]
+      - generic [ref=e88]:
+        - heading "Navigation" [level=3] [ref=e89]
+        - generic [ref=e92]:
+          - img [ref=e94]
+          - generic [ref=e96]:
+            - paragraph [ref=e97]: template
+            - generic [ref=e98]: Not available
+        - generic [ref=e101]:
+          - img [ref=e103]
+          - generic [ref=e105]:
+            - paragraph [ref=e106]: layout
+            - generic [ref=e107]: Template required
+        - generic [ref=e110]:
+          - img [ref=e112]
+          - generic [ref=e114]:
+            - paragraph [ref=e115]: email distribution
+            - generic [ref=e116]: Not available
+        - generic [ref=e119]:
+          - img [ref=e121]
+          - generic [ref=e123]:
+            - paragraph [ref=e124]: email status
+            - generic [ref=e125]: Not available
+        - generic [ref=e128]:
+          - img [ref=e130]
+          - generic [ref=e132]:
+            - paragraph [ref=e133]: email settings
+            - generic [ref=e134]: Not available
+      - button "Create Event" [ref=e136] [cursor=pointer]:
+        - img [ref=e137] [cursor=pointer]
+        - text: Create Event
+    - generic [ref=e139]:
+      - heading "Generate Certificate" [level=1] [ref=e143]
+      - generic [ref=e146]:
+        - generic [ref=e147]:
+          - heading "Create New Event" [level=3] [ref=e148]:
+            - img [ref=e149]
+            - text: Create New Event
+          - paragraph [ref=e150]: Create a new event to start generating certificates
+        - generic [ref=e151]:
+          - generic [ref=e152]:
+            - generic [ref=e153]: Event Title *
+            - textbox "Event Title *" [ref=e154]
+          - generic [ref=e155]:
+            - generic [ref=e156]: Description
+            - textbox "Description" [ref=e157]
+          - generic [ref=e158]:
+            - generic [ref=e159]: Event Date *
+            - button "November 21st, 2025" [ref=e160] [cursor=pointer]:
+              - img [ref=e161] [cursor=pointer]
+              - text: November 21st, 2025
+          - button "Create Event" [disabled]
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=e163]
+```
