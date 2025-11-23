@@ -42,10 +42,27 @@ export async function POST(request: NextRequest) {
     // Generate certificates for each recipient
     for (const recipient of recipients) {
       try {
+        // Handle different templateUrl formats:
+        // 1. Data URL (data:image/...) - use directly
+        // 2. Absolute URL (http://...) - use directly
+        // 3. Relative URL (/uploads/...) - construct full URL
+        let finalTemplateUrl: string;
+        if (templateUrl.startsWith('data:')) {
+          // Already a data URL, use as-is
+          finalTemplateUrl = templateUrl;
+        } else if (templateUrl.startsWith('http://') || templateUrl.startsWith('https://')) {
+          // Already an absolute URL, use as-is
+          finalTemplateUrl = templateUrl;
+        } else {
+          // Relative URL, construct full URL
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                         process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+                         'http://localhost:3000';
+          finalTemplateUrl = `${baseUrl}${templateUrl.startsWith('/') ? '' : '/'}${templateUrl}`;
+        }
+
         const certificateBuffer = await generateCertificate(
-          `${
-            process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-          }${templateUrl}`,
+          finalTemplateUrl,
           recipient,
           nameConfig as ITextConfig,
           idConfig as ITextConfig
