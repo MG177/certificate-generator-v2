@@ -315,38 +315,3 @@ export async function validateEmailDataIntegrity(db: Db): Promise<{
     };
   }
 }
-
-/**
- * Clean up old email logs (older than specified days)
- */
-export async function cleanupOldEmailLogs(
-  db: Db,
-  olderThanDays: number = 90
-): Promise<MigrationResult> {
-  try {
-    const emailLogsCollection = db.collection<IEmailLog>('emailLogs');
-
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
-
-    const result = await emailLogsCollection.deleteMany({
-      createdAt: { $lt: cutoffDate },
-    });
-
-    return {
-      success: true,
-      message: `Cleaned up ${result.deletedCount} email logs older than ${olderThanDays} days`,
-      collectionsUpdated: ['emailLogs'],
-      recordsUpdated: result.deletedCount,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: `Failed to cleanup old email logs: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`,
-      collectionsUpdated: [],
-      recordsUpdated: 0,
-    };
-  }
-}

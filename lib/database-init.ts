@@ -1,3 +1,5 @@
+'use server';
+
 import { getDatabase } from './mongodb';
 import {
   runEmailMigrations,

@@ -603,7 +603,7 @@ export function EmailConfigView({
                     onChange={(e) =>
                       handleConfigChange('smtpPass', e.target.value)
                     }
-                    placeholder="Your app password"
+                    placeholder="Leave blank to keep the saved password"
                   />
                 </div>
               </div>
