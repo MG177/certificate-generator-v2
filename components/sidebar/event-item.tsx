@@ -1,7 +1,7 @@
 'use client';
 
 import { IEvent } from '@/lib/types';
-import { format } from 'date-fns';
+import { formatDate } from '@/lib/utils';
 import {
   Calendar,
   Users,
@@ -80,7 +80,7 @@ export function EventItem({
   const [editData, setEditData] = useState({
     title: event.title,
     description: event.description || '',
-    eventDate: format(new Date(event.eventDate), 'yyyy-MM-dd'),
+    eventDate: formatDate(new Date(event.eventDate), 'iso'),
   });
 
   const getEventStatus = (event: IEvent) => {
@@ -157,7 +157,7 @@ export function EventItem({
     setEditData({
       title: event.title,
       description: event.description || '',
-      eventDate: format(new Date(event.eventDate), 'yyyy-MM-dd'),
+      eventDate: formatDate(new Date(event.eventDate), 'iso'),
     });
   };
 
@@ -166,7 +166,7 @@ export function EventItem({
     setEditData({
       title: event.title,
       description: event.description || '',
-      eventDate: format(new Date(event.eventDate), 'yyyy-MM-dd'),
+      eventDate: formatDate(new Date(event.eventDate), 'iso'),
     });
   };
 
@@ -325,7 +325,7 @@ export function EventItem({
                 <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                   <div className="flex items-center gap-1 truncate">
                     <Calendar className="w-3 h-3" />
-                    {format(new Date(event.eventDate), 'MMM dd, yyyy')}
+                    {formatDate(new Date(event.eventDate), 'medium')}
                   </div>
                   <div className="flex items-center gap-1">
                     <Users className="w-3 h-3" />

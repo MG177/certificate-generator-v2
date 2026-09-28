@@ -11,7 +11,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { initializeDatabase, checkDatabaseSetup } from '@/lib/actions';
+import {
+  initializeEmailDatabase,
+  checkEmailDatabaseSetup,
+} from '@/lib/database-init';
 import { toast } from '@/hooks/use-toast';
 import {
   Database,
@@ -52,7 +55,7 @@ export function DatabaseHealthCheck({
   const checkHealth = async () => {
     setIsLoading(true);
     try {
-      const result = await checkDatabaseSetup();
+      const result = await checkEmailDatabaseSetup();
       setHealthStatus(result);
       onHealthChange?.(result.isSetup);
     } catch (error) {
@@ -69,7 +72,7 @@ export function DatabaseHealthCheck({
   const handleInitializeDatabase = async () => {
     setIsInitializing(true);
     try {
-      const result = await initializeDatabase();
+      const result = await initializeEmailDatabase();
       setInitializationResult(result);
 
       if (result.success) {

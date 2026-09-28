@@ -128,9 +128,10 @@ export default function Home() {
         const savedState = loadAppState();
         if (savedState) {
           // Restore view
-          if (Object.values(viewList).includes(savedState.currentView)) {
-            setCurrentView(savedState.currentView as IView);
-          }
+          const savedView = Object.values(viewList).find(
+            (view) => view === savedState.currentView
+          );
+          if (savedView) setCurrentView(savedView);
 
           // Restore selected event if it still exists
           if (savedState.selectedEventId) {
@@ -223,11 +224,9 @@ export default function Home() {
             prev.map((e) => (e._id === fullEvent._id ? fullEvent : e))
           );
           // Use full event for navigation check
-          if (fullEvent.template.base64) {
-            navigateView(viewList.template);
-          } else {
-            navigateView(viewList.template);
-          }
+          navigateView(
+            fullEvent.template.base64 ? viewList.layout : viewList.template
+          );
           return;
         }
       } catch (err) {
@@ -235,12 +234,9 @@ export default function Home() {
       }
     }
     
-    // If event has template, go to layout section, otherwise go to template upload
-    if (event.template.base64) {
-      navigateView(viewList.template);
-    } else {
-      navigateView(viewList.template);
-    }
+    navigateView(
+      event.template.base64 ? viewList.layout : viewList.template
+    );
   };
 
   const handleEventUpdate = (event: IEvent) => {

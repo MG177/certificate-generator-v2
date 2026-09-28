@@ -1,9 +1,4 @@
-import {
-  createCanvas,
-  loadImage,
-  Canvas,
-  CanvasRenderingContext2D,
-} from 'canvas';
+import { createCanvas, loadImage, CanvasRenderingContext2D } from 'canvas';
 import { ITextConfig, IRecipientData } from './types';
 
 export async function generateCertificate(
@@ -59,22 +54,4 @@ function drawText(
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;
-}
-
-export function getTextMetrics(
-  text: string,
-  config: ITextConfig,
-  canvasWidth: number = 800,
-  canvasHeight: number = 600
-): { width: number; height: number } {
-  const canvas = createCanvas(canvasWidth, canvasHeight);
-  const ctx = canvas.getContext('2d');
-
-  ctx.font = `${config.fontSize}px ${config.fontFamily}`;
-  const metrics = ctx.measureText(text);
-
-  return {
-    width: metrics.width,
-    height: config.fontSize,
-  };
 }

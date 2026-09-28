@@ -1,4 +1,4 @@
-import { EmailStatus } from './types';
+import { IEvent, IRecipientData } from './types';
 
 /**
  * Email error handling utilities and error types
@@ -187,6 +187,7 @@ export class EmailValidator {
     'throwaway.email',
     'temp-mail.org',
     'yopmail.com',
+    'tempmail.net',
   ];
 
   /**
@@ -250,6 +251,12 @@ export class EmailValidator {
     }
 
     return { isValid: true, errors, warnings };
+  }
+
+  static isDeliverableAddress(email: string): boolean {
+    if (!this.validateEmailAddress(email).isValid) return false;
+    const domain = email.trim().toLowerCase().split('@')[1];
+    return !this.DISPOSABLE_EMAIL_DOMAINS.includes(domain);
   }
 
   /**
@@ -444,6 +451,81 @@ export class EmailValidator {
   }
 }
 
+export function validateEmailSendingContext(
+  event: IEvent,
+  participant: IRecipientData
+): EmailValidationResult {
+  const errors: EmailError[] = [];
+  const warnings: string[] = [];
+
+  if (!event.template?.base64) {
+    errors.push(
+      EmailErrorFactory.createValidationError(
+        'template',
+        event.template,
+        'Event must have a certificate template'
+      )
+    );
+  }
+
+  if (!event.nameConfig || !event.idConfig) {
+    errors.push(
+      EmailErrorFactory.createValidationError(
+        'textConfig',
+        null,
+        'Event must have text positioning configuration'
+      )
+    );
+  }
+
+  const participantValidation =
+    EmailValidator.validateParticipantForEmail(participant);
+  if (!participantValidation.isValid) errors.push(...participantValidation.errors);
+  warnings.push(...participantValidation.warnings);
+
+  if (!event.emailConfig) {
+    errors.push(
+      EmailErrorFactory.createValidationError(
+        'emailConfig',
+        null,
+        'Email configuration is required'
+      )
+    );
+  } else {
+    const configValidation = EmailValidator.validateSMTPConfig(event.emailConfig);
+    if (!configValidation.isValid) errors.push(...configValidation.errors);
+    warnings.push(...configValidation.warnings);
+  }
+
+  if (!event.emailTemplate) {
+    errors.push(
+      EmailErrorFactory.createValidationError(
+        'emailTemplate',
+        null,
+        'Email template is required'
+      )
+    );
+  } else {
+    const templateValidation = EmailValidator.validateEmailTemplate(
+      event.emailTemplate
+    );
+    if (!templateValidation.isValid) errors.push(...templateValidation.errors);
+    warnings.push(...templateValidation.warnings);
+  }
+
+  if (!event.emailSettings?.enabled) {
+    errors.push(
+      EmailErrorFactory.createValidationError(
+        'emailSettings.enabled',
+        event.emailSettings?.enabled,
+        'Email functionality is disabled for this event'
+      )
+    );
+  }
+
+  return { isValid: errors.length === 0, errors, warnings };
+}
+
 /**
  * Error retry logic
  */
@@ -488,60 +570,5 @@ export class EmailRetryManager {
   static getNextRetryTime(retryCount: number): Date {
     const delay = this.getRetryDelay(retryCount);
     return new Date(Date.now() + delay);
-  }
-}
-
-/**
- * Error logging and monitoring
- */
-export class EmailErrorLogger {
-  /**
-   * Log email error with context
-   */
-  static async logError(
-    error: EmailError,
-    context: {
-      eventId?: string;
-      participantId?: string;
-      emailAddress?: string;
-      operation?: string;
-    }
-  ): Promise<void> {
-    const logEntry = {
-      ...error,
-      context,
-      timestamp: new Date(),
-    };
-
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Email Error:', logEntry);
-    }
-
-    // TODO: Implement proper logging to database or external service
-    // This could be integrated with a logging service like Winston, LogRocket, etc.
-  }
-
-  /**
-   * Get error statistics
-   */
-  static async getErrorStatistics(
-    eventId?: string,
-    timeRange?: { start: Date; end: Date }
-  ): Promise<{
-    totalErrors: number;
-    errorsByType: Record<EmailErrorType, number>;
-    errorsByCode: Record<string, number>;
-    retryableErrors: number;
-    nonRetryableErrors: number;
-  }> {
-    // TODO: Implement error statistics from database
-    return {
-      totalErrors: 0,
-      errorsByType: {} as Record<EmailErrorType, number>,
-      errorsByCode: {},
-      retryableErrors: 0,
-      nonRetryableErrors: 0,
-    };
   }
 }

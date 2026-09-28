@@ -27,18 +27,6 @@ export interface IEvent {
   updatedAt: Date;
 }
 
-// Keep IProject for backward compatibility
-export interface IProject {
-  _id?: ObjectId;
-  userId: string;
-  name: string;
-  templateUrl: string;
-  namePosition: ITextConfig;
-  idPosition: ITextConfig;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export interface ITextConfig {
   x: number;
   y: number;
@@ -56,43 +44,6 @@ export interface IRecipientData {
   emailStatus?: EmailStatus;
   emailError?: string;
   emailRetryCount?: number;
-}
-
-export interface IProjectConfig {
-  namePosition: ITextConfig;
-  idPosition: ITextConfig;
-}
-
-export type TGenerateCertificates = (
-  templateUrl: string,
-  recipients: IRecipientData[],
-  config: IProjectConfig
-) => Promise<ArrayBuffer>;
-
-export type TUploadFile = (file: File) => Promise<string>;
-
-export interface CertificateEditorProps {
-  project: IProject;
-  onConfigChange: (newConfig: Partial<IProject>) => void;
-  onSave: () => Promise<void>;
-}
-
-export interface EventEditorProps {
-  event: IEvent;
-  onConfigChange: (newConfig: Partial<IEvent>) => void;
-  onSave: () => Promise<void>;
-}
-
-export interface EventListProps {
-  events: IEvent[];
-  onEventSelect: (eventId: string) => void;
-  onEventDelete: (eventId: string) => Promise<void>;
-}
-
-export interface UploadResponse {
-  success: boolean;
-  url?: string;
-  error?: string;
 }
 
 export const FONT_FAMILIES = [
@@ -156,14 +107,13 @@ export interface IEmailTemplate {
   text: string;
 }
 
-export const viewList: { [key: string]: string } = {
+export const viewList = {
   create: 'create',
   template: 'template',
   layout: 'layout',
   recipients: 'email distribution',
   email: 'email status',
   emailConfig: 'email settings',
-  // generate: 'generate',
-};
+} as const;
 
-export type IView = keyof typeof viewList;
+export type IView = (typeof viewList)[keyof typeof viewList];

@@ -14,25 +14,14 @@ import { ObjectId } from 'mongodb';
 import { generateCertificate } from './canvas-utils';
 import { generateCertificateFilename } from './certificate-utils';
 import archiver from 'archiver';
-import { Readable } from 'stream';
 import { EmailService, initializeEmailService } from './email-service';
 import {
   getEventEmailConfig,
   DEFAULT_EMAIL_TEMPLATE,
   isEmailEnabled,
 } from './email-config';
-import {
-  initializeEmailDatabase,
-  checkEmailDatabaseSetup,
-} from './database-init';
-import {
-  getDatabaseStats,
-  runDatabaseMaintenance,
-  optimizeDatabase,
-} from './database-management';
-import { EmailValidationService } from './email-validation-service';
+import { validateEmailSendingContext } from './email-error-handler';
 
-// Utility function to serialize MongoDB documents for client components
 function serializeEvent(event: any): IEvent {
   return {
     ...event,
@@ -47,34 +36,12 @@ function serializeEvent(event: any): IEvent {
   } as IEvent;
 }
 
-// Database initialization functions
-export async function initializeDatabase(): Promise<{
-  success: boolean;
-  message: string;
-  migrations: any[];
-  validation: any;
-}> {
-  return await initializeEmailDatabase();
-}
-
-export async function checkDatabaseSetup(): Promise<{
-  isSetup: boolean;
-  issues: string[];
-  recommendations: string[];
-}> {
-  return await checkEmailDatabaseSetup();
-}
-
-export async function getDatabaseStatistics() {
-  return await getDatabaseStats();
-}
-
-export async function runMaintenance() {
-  return await runDatabaseMaintenance();
-}
-
-export async function optimizeDatabasePerformance() {
-  return await optimizeDatabase();
+function stripSmtpPass(event: IEvent): IEvent {
+  if (!event.emailConfig) return event;
+  return {
+    ...event,
+    emailConfig: { ...event.emailConfig, smtpPass: '' },
+  };
 }
 
 // Event Management
@@ -112,10 +79,12 @@ export async function createEvent(
 
     const result = await eventsCollection.insertOne(eventData);
 
-    return serializeEvent({
-      ...eventData,
-      _id: result.insertedId,
-    });
+    return stripSmtpPass(
+      serializeEvent({
+        ...eventData,
+        _id: result.insertedId,
+      })
+    );
   } catch (error) {
     console.error('Error creating event:', error);
     throw new Error('Failed to create event');
@@ -145,7 +114,7 @@ export async function updateEvent(
       throw new Error('Event not found');
     }
 
-    return serializeEvent(result);
+    return stripSmtpPass(serializeEvent(result));
   } catch (error) {
     console.error('Error updating event:', error);
     throw new Error('Failed to update event');
@@ -167,21 +136,25 @@ export async function deleteEvent(eventId: string): Promise<boolean> {
   }
 }
 
+async function readEvent(
+  eventId: string,
+  projection?: Record<string, 0 | 1>
+): Promise<IEvent | null> {
+  const db = await getDatabase();
+  const options = projection ? { projection } : {};
+  const event = await db
+    .collection('events')
+    .findOne({ _id: new ObjectId(eventId) }, options);
+  return event ? serializeEvent(event) : null;
+}
+
 export async function getEvent(
   eventId: string,
   projection?: Record<string, 0 | 1>
 ): Promise<IEvent | null> {
   try {
-    const db = await getDatabase();
-    const eventsCollection = db.collection('events');
-
-    const options = projection ? { projection } : {};
-    const event = await eventsCollection.findOne(
-      { _id: new ObjectId(eventId) },
-      options
-    );
-
-    return event ? serializeEvent(event) : null;
+    const event = await readEvent(eventId, projection);
+    return event ? stripSmtpPass(event) : null;
   } catch (error) {
     console.error('Error getting event:', error);
     throw new Error('Failed to get event');
@@ -205,7 +178,7 @@ export async function getAllEvents(
 
     const events = await query.toArray();
 
-    return events.map(serializeEvent);
+    return events.map((event) => stripSmtpPass(serializeEvent(event)));
   } catch (error) {
     console.error('Error getting all events:', error);
     throw new Error('Failed to get events');
@@ -231,14 +204,16 @@ export async function getAllEventsSummary(
       .sort({ createdAt: -1 })
       .toArray();
 
-    return events.map((event) => ({
-      ...serializeEvent(event),
-      template: {
-        ...event.template,
-        base64: '', // Empty string to maintain type compatibility
-      },
-      participants: [], // Empty array to maintain type compatibility
-    }));
+    return events.map((event) =>
+      stripSmtpPass({
+        ...serializeEvent(event),
+        template: {
+          ...event.template,
+          base64: '',
+        },
+        participants: [],
+      })
+    );
   } catch (error) {
     console.error('Error getting event summaries:', error);
     throw new Error('Failed to get event summaries');
@@ -293,7 +268,7 @@ export async function restoreEvent(eventId: string): Promise<boolean> {
 
 export async function duplicateEvent(eventId: string): Promise<IEvent> {
   try {
-    const originalEvent = await getEvent(eventId);
+    const originalEvent = await readEvent(eventId);
     if (!originalEvent) {
       throw new Error('Event not found');
     }
@@ -619,10 +594,6 @@ export async function generateSelectedCertificates(
 
     // Set up event listeners
     archive.on('data', (chunk) => chunks.push(chunk));
-    archive.on('error', (err) => {
-      console.error('Archive error:', err);
-      throw err;
-    });
 
     // Generate certificates for selected participants only
     for (const participant of selectedParticipants) {
@@ -651,8 +622,11 @@ export async function generateSelectedCertificates(
       }
     }
 
-    // Finalize the archive
-    await archive.finalize();
+    await new Promise<void>((resolve, reject) => {
+      archive.on('end', () => resolve());
+      archive.on('error', (err) => reject(err));
+      archive.finalize();
+    });
 
     // Convert chunks to single buffer
     const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
@@ -731,81 +705,6 @@ export async function exportParticipantsCSV(
   }
 }
 
-export async function generateCertificates(
-  eventId: string
-): Promise<ArrayBuffer> {
-  try {
-    const event = await getEvent(eventId);
-    if (!event) {
-      throw new Error('Event not found');
-    }
-
-    if (!event.template.base64 || event.participants.length === 0) {
-      throw new Error('Event missing template or participants');
-    }
-
-    // Convert base64 template to buffer
-    const templateBuffer = Buffer.from(event.template.base64, 'base64');
-    const templateDataUrl = `data:image/png;base64,${event.template.base64}`;
-
-    // Create ZIP archive
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    const chunks: Buffer[] = [];
-
-    // Set up event listeners
-    archive.on('data', (chunk) => chunks.push(chunk));
-    archive.on('error', (err) => {
-      console.error('Archive error:', err);
-      throw err;
-    });
-
-    // Generate certificates for each participant
-    for (const participant of event.participants) {
-      try {
-        const certificateBuffer = await generateCertificate(
-          templateDataUrl,
-          participant,
-          event.nameConfig,
-          event.idConfig
-        );
-
-        const filename = `certificate_${participant.certification_id}.png`;
-        archive.append(certificateBuffer, { name: filename });
-      } catch (error) {
-        console.error(
-          `Error generating certificate for ${participant.name}:`,
-          error
-        );
-        // Continue with other certificates even if one fails
-      }
-    }
-
-    // Finalize the archive
-    await new Promise<void>((resolve, reject) => {
-      archive.on('end', () => {
-        console.log('Archive finalized successfully');
-        resolve();
-      });
-
-      archive.on('error', (err) => {
-        console.error('Archive finalization error:', err);
-        reject(err);
-      });
-
-      archive.finalize();
-    });
-
-    const zipBuffer = Buffer.concat(chunks as unknown as Uint8Array[]);
-    return zipBuffer.buffer.slice(
-      zipBuffer.byteOffset,
-      zipBuffer.byteOffset + zipBuffer.byteLength
-    ) as ArrayBuffer;
-  } catch (error) {
-    console.error('Error generating certificates:', error);
-    throw new Error('Failed to generate certificates');
-  }
-}
-
 // Email Management
 export async function sendParticipantEmail(
   eventId: string,
@@ -817,7 +716,7 @@ export async function sendParticipantEmail(
   validationErrors?: string[];
 }> {
   try {
-    const event = await getEvent(eventId);
+    const event = await readEvent(eventId);
     if (!event) {
       return { success: false, error: 'Event not found' };
     }
@@ -829,20 +728,7 @@ export async function sendParticipantEmail(
       return { success: false, error: 'Participant not found' };
     }
 
-    console.log('participant', participant);
-    console.log('event', event);
-    console.log('eventId', eventId);
-    console.log('participantId', participantId);
-    console.log('operation', 'send');
-
-    // Validate email sending context
-    const validation = await EmailValidationService.validateEmailSendingContext(
-      event,
-      participant,
-      { eventId, participantId, operation: 'send' }
-    );
-
-    console.log('validation', validation);
+    const validation = validateEmailSendingContext(event, participant);
 
     if (!validation.isValid) {
       return {
@@ -1207,12 +1093,15 @@ export async function updateEventEmailConfig(
   emailConfig: IEmailConfig
 ): Promise<boolean> {
   try {
-    const updateData = {
-      emailConfig,
-      updatedAt: new Date(),
-    };
+    let smtpPass = emailConfig.smtpPass;
+    if (!smtpPass) {
+      const existing = await readEvent(eventId);
+      smtpPass = existing?.emailConfig?.smtpPass || '';
+    }
 
-    await updateEvent(eventId, updateData);
+    await updateEvent(eventId, {
+      emailConfig: { ...emailConfig, smtpPass },
+    });
     return true;
   } catch (error) {
     console.error('Error updating event email config:', error);

@@ -19,8 +19,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { CalendarIcon, Plus } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { createEvent } from '@/lib/actions';
 import { IEvent } from '@/lib/types';
 
@@ -126,7 +125,7 @@ export function EventCreationTab({ onEventCreated }: EventCreationTabProps) {
                 disabled={isCreating}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {eventDate ? format(eventDate, 'PPP') : 'Pick a date'}
+                {eventDate ? formatDate(eventDate, 'long') : 'Pick a date'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">

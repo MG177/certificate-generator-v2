@@ -141,7 +141,7 @@ export function Sidebar({
               Navigation
             </h3>
             {Object.entries(viewList)
-              .filter(([key]) => key !== viewList.create)
+              .filter(([key]) => key !== 'create')
               .map(([key, label]) => {
                 const status = getViewStatus(label);
                 const isActive = currentView === label;
@@ -204,9 +204,9 @@ export function Sidebar({
                           </p>
                           {isDisabled && (
                             <Badge variant="secondary" className="text-xs">
-                              {key === viewList.layout ||
-                              key === viewList.recipients ||
-                              key === viewList.email
+                              {key === 'layout' ||
+                              key === 'recipients' ||
+                              key === 'email'
                                 ? 'Template required'
                                 : 'Not available'}
                             </Badge>

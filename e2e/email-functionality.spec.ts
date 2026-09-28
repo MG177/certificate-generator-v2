@@ -274,32 +274,6 @@ test.describe('Email Functionality', () => {
     }
   });
 
-  test('should display email validation feedback', async ({ page }) => {
-    // Open email configuration dialog
-    const emailConfigButton = page.locator(
-      '[data-testid="email-config-button"]'
-    );
-    if (await emailConfigButton.isVisible()) {
-      await emailConfigButton.click();
-
-      // Fill invalid SMTP settings
-      await page.fill('[data-testid="smtp-host"]', 'invalid-host');
-      await page.fill('[data-testid="smtp-port"]', '99999');
-      await page.fill('[data-testid="smtp-user"]', 'invalid-user');
-      await page.fill('[data-testid="smtp-pass"]', 'invalid-pass');
-
-      // Check validation feedback
-      const validationFeedback = page.locator(
-        '[data-testid="email-validation-feedback"]'
-      );
-      if (await validationFeedback.isVisible()) {
-        await expect(validationFeedback).toContainText('Invalid SMTP host');
-        await expect(validationFeedback).toContainText('Invalid port number');
-        await expect(validationFeedback).toContainText('Invalid email address');
-      }
-    }
-  });
-
   test('should handle email template configuration', async ({ page }) => {
     // Open email configuration dialog
     const emailConfigButton = page.locator(

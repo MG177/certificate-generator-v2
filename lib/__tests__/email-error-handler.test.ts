@@ -3,7 +3,6 @@ import {
   EmailErrorType,
   EmailValidator,
   EmailRetryManager,
-  EmailErrorLogger,
 } from '../email-error-handler';
 import { IEmailConfig, IEmailTemplate, IRecipientData } from '../types';
 
@@ -474,52 +473,6 @@ describe('EmailRetryManager', () => {
 
       expect(nextRetryTime).toBeGreaterThan(now);
       expect(nextRetryTime - now).toBeGreaterThan(60000); // 1 minute for rate limit
-    });
-  });
-});
-
-describe('EmailErrorLogger', () => {
-  let logger: EmailErrorLogger;
-
-  beforeEach(() => {
-    logger = new EmailErrorLogger();
-  });
-
-  describe('logError', () => {
-    it('should log error with correct format', () => {
-      const error = EmailErrorFactory.createSMTPConnectionError(
-        new Error('Connection failed')
-      );
-      const context = { participantId: 'CERT-001', eventId: 'event-1' };
-
-      const logEntry = logger.logError(error, context);
-
-      expect(logEntry.timestamp).toBeInstanceOf(Date);
-      expect(logEntry.errorType).toBe(EmailErrorType.SMTP_CONNECTION_ERROR);
-      expect(logEntry.message).toContain('SMTP connection failed');
-      expect(logEntry.context).toEqual(context);
-      expect(logEntry.retryable).toBe(true);
-    });
-  });
-
-  describe('getErrorSummary', () => {
-    it('should return error summary', () => {
-      const error1 = EmailErrorFactory.createSMTPConnectionError(
-        new Error('Connection failed')
-      );
-      const error2 = EmailErrorFactory.createAuthenticationError(
-        new Error('Invalid credentials')
-      );
-
-      logger.logError(error1, { participantId: 'CERT-001' });
-      logger.logError(error2, { participantId: 'CERT-002' });
-
-      const summary = logger.getErrorSummary();
-
-      expect(summary.totalErrors).toBe(2);
-      expect(summary.errorTypes[EmailErrorType.SMTP_CONNECTION_ERROR]).toBe(1);
-      expect(summary.errorTypes[EmailErrorType.AUTHENTICATION_ERROR]).toBe(1);
-      expect(summary.retryableErrors).toBe(1);
     });
   });
 });

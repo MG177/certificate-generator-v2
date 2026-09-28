@@ -1,11 +1,15 @@
 import nodemailer, { Transporter, SendMailOptions } from 'nodemailer';
-import { IEmailConfig, IEmailTemplate, EmailStatus } from './types';
+import { IEmailConfig, IEmailTemplate } from './types';
 import {
   EmailErrorFactory,
   EmailError,
   EmailErrorType,
   EmailRetryManager,
+  EmailValidator,
 } from './email-error-handler';
+
+// ponytail: process-wide counter; move to a store if more than one server sends mail
+const sendWindows = new Map<string, { count: number; resetTime: number }>();
 
 export interface EmailData {
   to: string;
@@ -31,8 +35,6 @@ export interface EmailResult {
 export class EmailService {
   private transporter: Transporter;
   private config: IEmailConfig;
-  private rateLimiter: Map<string, { count: number; resetTime: number }> =
-    new Map();
 
   constructor(config: IEmailConfig) {
     this.config = config;
@@ -44,10 +46,6 @@ export class EmailService {
         user: config.smtpUser,
         pass: config.smtpPass,
       },
-      tls: {
-        ciphers: 'SSLv3',
-        rejectUnauthorized: true,
-      },
     });
   }
 
@@ -55,21 +53,7 @@ export class EmailService {
    * Validate email address format
    */
   validateEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return false;
-
-    // Check for disposable email domains
-    const disposableDomains = [
-      '10minutemail.com',
-      'tempmail.org',
-      'guerrillamail.com',
-      'mailinator.com',
-      'tempmail.net',
-    ];
-    const domain = email.split('@')[1]?.toLowerCase();
-    if (disposableDomains.includes(domain)) return false;
-
-    return true;
+    return EmailValidator.isDeliverableAddress(email);
   }
 
   /**
@@ -77,10 +61,10 @@ export class EmailService {
    */
   canSend(userId: string, limit: number = 100): boolean {
     const now = Date.now();
-    const userLimit = this.rateLimiter.get(userId);
+    const userLimit = sendWindows.get(userId);
 
     if (!userLimit || now > userLimit.resetTime) {
-      this.rateLimiter.set(userId, { count: 1, resetTime: now + 3600000 }); // 1 hour
+      sendWindows.set(userId, { count: 1, resetTime: now + 3600000 });
       return true;
     }
 
@@ -361,42 +345,6 @@ export class EmailService {
   }
 
   /**
-   * Get rate limit status for user
-   */
-  getRateLimitStatus(
-    userId: string,
-    limit: number = 100
-  ): {
-    canSend: boolean;
-    remaining: number;
-    resetTime: number;
-  } {
-    const now = Date.now();
-    const userLimit = this.rateLimiter.get(userId);
-
-    if (!userLimit || now > userLimit.resetTime) {
-      return {
-        canSend: true,
-        remaining: limit,
-        resetTime: now + 3600000,
-      };
-    }
-
-    return {
-      canSend: userLimit.count < limit,
-      remaining: Math.max(0, limit - userLimit.count),
-      resetTime: userLimit.resetTime,
-    };
-  }
-
-  /**
-   * Clear rate limit for user (for testing)
-   */
-  clearRateLimit(userId: string): void {
-    this.rateLimiter.delete(userId);
-  }
-
-  /**
    * Update email configuration
    */
   updateConfig(newConfig: IEmailConfig): void {
@@ -408,10 +356,6 @@ export class EmailService {
       auth: {
         user: newConfig.smtpUser,
         pass: newConfig.smtpPass,
-      },
-      tls: {
-        ciphers: 'SSLv3',
-        rejectUnauthorized: true,
       },
     });
   }
